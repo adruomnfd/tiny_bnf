@@ -152,7 +152,7 @@ struct Expr {
   }
 
 int main() {
-  //
+  // 
   tiny_bnf::Specification spec;
   tiny_bnf::alternatives(spec, "digit", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
   spec["number"] += "number", "digit";
@@ -221,6 +221,8 @@ int main() {
   CHECK_ANSWER(3 + 1 * 2);
   CHECK_ANSWER(6 * 2);
   CHECK_ANSWER(6 * (3 + 2));
+  CHECK_ANSWER(6 * (3 * 2));
+  CHECK_ANSWER((3 * 2) * 6);
   CHECK_ANSWER((3 + 2) * 6);
   CHECK_ANSWER((3 + 2) * (1 + 2));
   CHECK_ANSWER((3 + 2) * 7 + 5);
