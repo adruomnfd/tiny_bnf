@@ -111,7 +111,7 @@ struct Term {
       case Op::Sub: return term->eval() - term2->eval();
       case Op::Mul: return term->eval() * factor->eval();
       case Op::Div: return term->eval() / factor->eval();
-      case Op::Factor: return factor->eval();
+      default: return factor->eval();
     }
   }
 
