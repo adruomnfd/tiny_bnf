@@ -8,8 +8,6 @@
 #include <string_view>
 #include <vector>
 
-// Test
-
 namespace tiny_bnf {
 
 template <typename F>
@@ -27,6 +25,7 @@ struct Error {
   Error() = default;
   Error(T value) : value(std::move(value)) {
   }
+
   T value;
 };
 
@@ -66,8 +65,6 @@ struct Expected {
 
 struct Specification {
   struct Expression {
-    std::vector<std::string> exprs;
-
     Expression &operator+=(std::string symbol) {
       exprs.push_back(std::move(symbol));
       return *this;
@@ -83,7 +80,10 @@ struct Specification {
     auto end() const {
       return std::end(exprs);
     }
+
+    std::vector<std::string> exprs;
   };
+
   struct Rule {
     std::string symbol;
     Expression expression;
@@ -113,6 +113,7 @@ struct Terminals {
   std::string &operator[](std::string expr) {
     return expr_to_sym[expr] = expr;
   }
+
   std::map<std::string, std::string, std::less<>> expr_to_sym;
 };
 
@@ -187,10 +188,10 @@ Expected<Node> parse(const Specification &spec, Tokens tokens, void (*debug)(std
       for (size_t i = 0; i <= std::size(tokens) - n; ++i) {
         auto first = std::begin(tokens) + i;
         if (match(first, first + n, std::begin(it->expression), std::end(it->expression),
-                  [](auto token, auto expr) { return token.symbol == expr; })) {
+                  [](const auto& token,const auto& expr) { return token.symbol == expr; })) {
           Node node{it->symbol, {}};
           for (auto token = first; token != first + n; ++token)
-            node.children.push_back(*token);
+            node.children.push_back(std::move(*token));
           replace(tokens, first, first + n, node);
           if (debug) {
             for (auto token : tokens)
@@ -208,7 +209,7 @@ Expected<Node> parse(const Specification &spec, Tokens tokens, void (*debug)(std
   else {
     std::string error = "Unused tokens: ";
     for (auto &token : tokens)
-      error += token.symbol;
+      error += std::move(token.symbol);
     return Error{error};
   }
 }
@@ -216,7 +217,7 @@ Expected<Node> parse(const Specification &spec, Tokens tokens, void (*debug)(std
 template <typename F>
 void traverse(Node node, F f, int depth = 0) {
   f(node.symbol, depth);
-  for (auto &child : node.children)
+  for (const auto &child : node.children)
     traverse(child, f, depth + 1);
 }
 
