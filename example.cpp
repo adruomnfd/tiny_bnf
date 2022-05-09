@@ -182,7 +182,7 @@ int main() {
   gen.bind<Four>("4");
   gen.bind<Five>("5");
   gen.bind<Six>("6");
-  gen.bind<Seven>("7");
+  // gen.bind<Seven>("7");
   gen.bind<Eight>("8");
   gen.bind<Nine>("9");
   gen.bind<Digit>("digit", Ctor<Zero>{}, Ctor<One>{}, Ctor<Two>{}, Ctor<Three>{}, Ctor<Four>{}, Ctor<Five>{},
