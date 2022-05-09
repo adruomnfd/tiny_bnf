@@ -148,7 +148,7 @@ struct Expr {
       std::cout << "Answer to [" #x "] is not correct: " << *val << ", should be " << (x) << '\n'; \
   } else {                                                                                         \
     std::cout << "When processing [" #x "]: " << val.error() << '\n';                                \
-    abort();                                                                                       \
+    exit(1);                                                                                       \
   }
 
 int main() {
