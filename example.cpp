@@ -168,6 +168,8 @@ int main() {
   spec["term"] += "term", "-", "term";
   spec["term"] += "factor";
 
+  spec["expr"] += "term";
+
   //
   tiny_bnf::Terminals terminals = autoTerminals(spec);
   terminals[" "] = "";
