@@ -3,6 +3,7 @@
 
 #include <map>
 #include <memory>
+#include <numeric>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -63,32 +64,32 @@ struct Expected {
   std::optional<Error<ErrorRepr>> error_;
 };
 
+struct Expression {
+  Expression &operator+=(std::string symbol) {
+    exprs.push_back(std::move(symbol));
+    return *this;
+  }
+  Expression &operator,(std::string symbol) {
+    exprs.push_back(std::move(symbol));
+    return *this;
+  }
+
+  auto begin() const {
+    return std::begin(exprs);
+  }
+  auto end() const {
+    return std::end(exprs);
+  }
+
+  std::vector<std::string> exprs;
+};
+
+struct Rule {
+  std::string symbol;
+  Expression expression;
+};
+
 struct Specification {
-  struct Expression {
-    Expression &operator+=(std::string symbol) {
-      exprs.push_back(std::move(symbol));
-      return *this;
-    }
-    Expression &operator,(std::string symbol) {
-      exprs.push_back(std::move(symbol));
-      return *this;
-    }
-
-    auto begin() const {
-      return std::begin(exprs);
-    }
-    auto end() const {
-      return std::end(exprs);
-    }
-
-    std::vector<std::string> exprs;
-  };
-
-  struct Rule {
-    std::string symbol;
-    Expression expression;
-  };
-
   Expression &operator[](std::string symbol) {
     rules.push_back(Rule{std::move(symbol), {}});
     return rules.back().expression;
@@ -139,86 +140,103 @@ struct Node {
   std::string symbol;
   std::vector<Node> children;
 };
-
 using Tokens = std::vector<Node>;
 
 Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
   Tokens tokens;
   const auto &map = terminals.expr_to_sym;
 
-  size_t pos = 0;
-  while (pos++ < std::size(input)) {
-    std::string_view expr = input.substr(0, pos);
-    if (auto it = map.find(expr); it != std::end(map)) {
+  size_t a = 0, b = 0;
+  while (b != std::size(input)) {
+    ++b;
+    if (auto it = map.find(input.substr(a, b - a)); it != std::end(map)) {
       if (it->second != "")
         tokens.push_back({it->second, {}});
-      input = input.substr(pos);
-      pos = 0;
+      a = b;
     }
   }
 
-  if (std::size(input))
-    return Error<>("Unused string: " + (std::string)input);
-
-  return tokens;
+  if (a == b)
+    return tokens;
+  else
+    return Error<>("Unused string: " + (std::string)input.substr(a));
 }
 
-template <typename ItA, typename ItB, typename Pred>
-bool match(ItA a_first, ItA a_last, ItB b_first, ItB b_last, Pred pred) {
-  if (a_last - a_first != b_last - b_first)
-    return false;
+Expected<Node> parseTopdown(const Specification &spec, Tokens tokens, std::vector<std::string> *log = nullptr) {
+  std::map<std::string, std::vector<Expression>> uniqueSymbols;
+  for (const auto &rule : spec)
+    uniqueSymbols[rule.symbol].push_back(rule.expression);
 
-  for (; a_first != a_last; ++a_first, ++b_first)
-    if (!pred(*a_first, *b_first))
-      return false;
+  auto symbol = spec.rules.back().symbol;
 
-  return true;
-}
+  size_t first = 0;
+  size_t last = std::size(tokens);
 
-template <typename Container, typename It, typename T>
-It replace(Container &container, It first, It last, T value) {
-  auto n = first - std::begin(container);
-  container.erase(first, last);
-  return container.insert(std::begin(container) + n, std::move(value));
-}
+  auto parse = [&](auto &parse, std::string symbol, int depth = 0) -> std::optional<Node> {
+    if (first >= last)
+      return std::nullopt;
 
-Expected<Node> parse(const Specification &spec, Tokens tokens, void (*debug)(std::string) = nullptr) {
-  for (auto it = std::begin(spec); it != std::end(spec); ++it) {
-    for (size_t n = 1; n <= std::size(tokens); ++n) {
-      for (size_t i = 0; i <= std::size(tokens) - n; ++i) {
-        auto first = std::begin(tokens) + i;
-        if (match(first, first + n, std::begin(it->expression), std::end(it->expression),
-                  [](const auto& token,const auto& expr) { return token.symbol == expr; })) {
-          Node node{it->symbol, {}};
-          for (auto token = first; token != first + n; ++token)
-            node.children.push_back(std::move(*token));
-          replace(tokens, first, first + n, node);
-          if (debug) {
-            for (auto token : tokens)
-              debug(token.symbol + ' ');
-            debug("\n");
-          }
-          return parse(spec, std::move(tokens));
-        }
+    size_t p = log ? log->size() : 0;
+    if (log)
+      log->push_back({});
+    if (log)
+      (*log)[p] += std::string(depth * 2, ' ') + '[' + symbol + ']';
+
+    if (uniqueSymbols.find(symbol) == std::end(uniqueSymbols)) {
+      if (tokens[first].symbol == symbol) {
+        ++first;
+        if (log)
+          (*log)[p] += u8"✓";
+        return Node{symbol, {}};
+      } else {
+        if (log)
+          (*log)[p] += u8"✗";
+        return std::nullopt;
       }
     }
-  }
 
-  if (std::size(tokens) == 1)
-    return tokens[0];
-  else {
-    std::string error = "Unused tokens: ";
-    for (auto &token : tokens)
-      error += std::move(token.symbol);
-    return Error{error};
-  }
-}
+    for (const auto &expr : uniqueSymbols[symbol]) {
+      if (last - first < std::size(expr.exprs))
+        continue;
 
-template <typename F>
-void traverse(Node node, F f, int depth = 0) {
-  f(node.symbol, depth);
-  for (const auto &child : node.children)
-    traverse(child, f, depth + 1);
+      auto first_backup = first;
+      ScopeGuard last_guard([&, backup = last]() { last = backup; });
+
+      Node node{symbol, {}};
+      bool ok = true;
+      last -= std::size(expr.exprs) - 1;
+
+      for (const auto &s : expr) {
+        if (auto n = parse(parse, s, depth + 1)) {
+          node.children.push_back(*n);
+        } else {
+          ok = false;
+          break;
+        }
+        ++last;
+      }
+
+      if ((depth == 0) && (first != std::size(tokens)))
+        ok = false;
+
+      if (ok) {
+        if (log)
+          (*log)[p] += u8"✓";
+        return node;
+      } else {
+        if (log)
+          (*log)[p] += u8"✗";
+        first = first_backup;
+      }
+    }
+
+    return std::nullopt;
+  };
+
+  if (auto node = parse(parse, symbol))
+    return *node;
+  else
+    return Error<>("Failed to parse");
 }
 
 template <typename... Ts>
@@ -231,20 +249,25 @@ struct NthType<0, T, Ts...> {
   using type = T;
 };
 
+struct AnnotatedPtr {
+  void *ptr = nullptr;
+  size_t id = 0;
+};
+
 struct Generator {
   struct Concept {
     virtual ~Concept() = default;
-    virtual std::optional<std::pair<void *, size_t>> construct(std::vector<void *> args,
-                                                               std::vector<size_t> typeids) = 0;
+    virtual std::optional<AnnotatedPtr> construct(std::vector<AnnotatedPtr> args) = 0;
     virtual void destruct(void *obj) const = 0;
   };
+
   template <typename T, typename... Ctors>
   struct Model : Concept {
-    std::optional<std::pair<void *, size_t>> construct(std::vector<void *> args, std::vector<size_t> typeids) override {
+    std::optional<AnnotatedPtr> construct(std::vector<AnnotatedPtr> args) override {
       if constexpr (sizeof...(Ctors) == 0)
-        return std::pair{new T(), typeid(T).hash_code()};
+        return AnnotatedPtr{new T(), typeid(T).hash_code()};
       else
-        return match(args, typeids, Ctors{}...);
+        return match(args, Ctors{}...);
     }
 
     void destruct(void *obj) const override {
@@ -252,21 +275,18 @@ struct Generator {
     }
 
     template <typename... Args, int... I>
-    static auto integerSeqHelper(std::vector<void *> args, std::integer_sequence<int, I...>) {
-      return std::pair{new T((*(typename NthType<I, Args...>::type *)args[I])...), typeid(T).hash_code()};
+    static auto integerSeqHelper(std::vector<AnnotatedPtr> args, std::integer_sequence<int, I...>) {
+      return AnnotatedPtr{new T((*(typename NthType<I, Args...>::type *)args[I].ptr)...), typeid(T).hash_code()};
     }
 
     template <typename... Args, typename... Cs>
-    std::optional<std::pair<void *, size_t>> match(std::vector<void *> args, std::vector<size_t> typeids, Ctor<Args...>,
-                                                   Cs... ctors) {
-      int i = 0;
-      if (std::size(args) == sizeof...(Args) && ((typeids[i++] == typeid(Args).hash_code()) && ...)) {
+    std::optional<AnnotatedPtr> match(std::vector<AnnotatedPtr> args, Ctor<Args...>, Cs... ctors) {
+      if (int i = 0; std::size(args) == sizeof...(Args) && ((args[i++].id == typeid(Args).hash_code()) && ...))
         return integerSeqHelper<Args...>(args, std::make_integer_sequence<int, sizeof...(Args)>{});
-      }
       if constexpr (sizeof...(Cs) == 0)
         return std::nullopt;
       else
-        return match(args, typeids, ctors...);
+        return match(args, ctors...);
     }
   };
 
@@ -288,16 +308,16 @@ struct Generator {
 
 template <typename T>
 Expected<T> generate(const Generator &generator, const Node &node) {
-  using R = Expected<std::pair<std::pair<void *, size_t>, Generator::Concept *>>;
+  using R = Expected<std::pair<AnnotatedPtr, Generator::Concept *>>;
+
   auto build = [&](auto &build, Node node) -> R {
-    std::vector<void *> args;
-    std::vector<size_t> typeids;
+    std::vector<AnnotatedPtr> args;
     std::vector<Generator::Concept *> models;
+
     for (auto child : node.children) {
       if (auto ret = build(build, child)) {
-        auto [ptr, model] = *ret;
-        args.push_back(ptr.first);
-        typeids.push_back(ptr.second);
+        auto [arg, model] = *ret;
+        args.push_back(arg);
         models.push_back(model);
       } else {
         return ret;
@@ -306,11 +326,11 @@ Expected<T> generate(const Generator &generator, const Node &node) {
 
     ScopeGuard guard{[&]() {
       for (size_t i = 0; i < std::size(args); ++i)
-        models[i]->destruct(args[i]);
+        models[i]->destruct(args[i].ptr);
     }};
 
     if (auto model = generator.findModel(node.symbol)) {
-      if (auto ptr = (*model)->construct(args, typeids))
+      if (auto ptr = (*model)->construct(args))
         return std::pair{*ptr, *model};
       else
         return Error<>("Cannot construct type: " + node.symbol);
@@ -320,9 +340,9 @@ Expected<T> generate(const Generator &generator, const Node &node) {
   };
 
   if (auto ret = build(build, node)) {
-    auto [ptr, model] = *ret;
-    T object = *(T *)ptr.first;
-    model->destruct(ptr.first);
+    auto [arg, model] = *ret;
+    T object = *(T *)arg.ptr;
+    model->destruct(arg.ptr);
     return object;
   } else {
     return Error<>(ret.error());

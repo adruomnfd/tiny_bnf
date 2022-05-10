@@ -1,4 +1,5 @@
 #include <iostream>
+#include <variant>
 
 #include "tiny_bnf.h"
 
@@ -21,6 +22,13 @@ struct Indirect {
   std::shared_ptr<T> x;
 };
 
+template <typename... Ts>
+struct Overloaded : Ts... {
+  Overloaded(Ts... xs) : Ts(xs)... {
+  }
+  using Ts::operator()...;
+};
+
 struct Zero {};
 struct One {};
 struct Two {};
@@ -32,34 +40,14 @@ struct Seven {};
 struct Eight {};
 struct Nine {};
 
-struct Digit {
-  Digit(Zero) : n(0) {
-  }
-  Digit(One) : n(1) {
-  }
-  Digit(Two) : n(2) {
-  }
-  Digit(Three) : n(3) {
-  }
-  Digit(Four) : n(4) {
-  }
-  Digit(Five) : n(5) {
-  }
-  Digit(Six) : n(6) {
-  }
-  Digit(Seven) : n(7) {
-  }
-  Digit(Eight) : n(8) {
-  }
-  Digit(Nine) : n(9) {
-  }
-
-  int eval() const {
-    return n;
-  }
-
-  int n = 0;
-};
+using Digit = std::variant<Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine>;
+int eval(Digit d) {
+  return std::visit(
+      Overloaded{[](Zero) { return 0; }, [](One) { return 1; }, [](Two) { return 2; }, [](Three) { return 3; },
+                 [](Four) { return 4; }, [](Five) { return 5; }, [](Six) { return 6; }, [](Seven) { return 7; },
+                 [](Eight) { return 8; }, [](Nine) { return 9; }},
+      d);
+}
 
 struct Number {
   Number(Number n, Digit d) : n(n), d(d) {
@@ -68,7 +56,7 @@ struct Number {
   }
 
   int eval() const {
-    return n ? n->eval() * 10 + d.eval() : d.eval();
+    return n ? n->eval() * 10 + ::eval(d) : ::eval(d);
   }
 
   Indirect<Number> n;
@@ -84,61 +72,64 @@ struct Multiply {};
 struct Divide {};
 
 struct Factor {
-  Factor(LeftParenthesis, struct Term, RightParenthesis);
+  Factor(LeftParenthesis, struct Expr, RightParenthesis);
   Factor(Number);
 
   int eval() const;
 
   std::optional<Number> n;
-  Indirect<struct Term> term;
+  Indirect<struct Expr> expr;
 };
 
 struct Term {
-  Term(Term term, Multiply, Factor factor) : term(term), op(Op::Mul), factor(factor) {
+  Term(Factor factor, Multiply, Term term) : op(Op::Mul), factor(factor), term(term) {
   }
-  Term(Term term, Divide, Factor factor) : term(term), op(Op::Div), factor(factor) {
+  Term(Factor factor, Divide, Term term) : op(Op::Div), factor(factor), term(term) {
   }
-  Term(Term term, Add, Term term2) : term(term), op(Op::Add), term2(term2) {
-  }
-  Term(Term term, Subtract, Term term2) : term(term), op(Op::Sub), term2(term2) {
-  }
-  Term(Factor factor) : op(Op::Factor), factor(factor) {
+  Term(Factor factor) : op(Op::Identity), factor(factor) {
   }
 
   int eval() const {
     switch (op) {
-      case Op::Add: return term->eval() + term2->eval();
-      case Op::Sub: return term->eval() - term2->eval();
-      case Op::Mul: return term->eval() * factor->eval();
-      case Op::Div: return term->eval() / factor->eval();
+      case Op::Mul: return factor->eval() * term->eval();
+      case Op::Div: return factor->eval() / term->eval();
       default: return factor->eval();
     }
   }
 
-  Indirect<Term> term;
-  enum class Op { Add, Sub, Mul, Div, Factor } op;
-  Indirect<Term> term2;
+  enum class Op { Mul, Div, Identity } op;
   std::optional<Factor> factor;
+  Indirect<Term> term;
 };
 
-Factor::Factor(LeftParenthesis, Term t, RightParenthesis) : term(t) {
+struct Expr {
+  Expr(Term term, Add, Expr expr) : op(Op::Add), term(term), expr(expr) {
+  }
+  Expr(Term term, Subtract, Expr expr) : op(Op::Sub), term(term), expr(expr) {
+  }
+  Expr(Term term) : op(Op::Identity), term(term) {
+  }
+
+  int eval() const {
+    switch (op) {
+      case Op::Add: return term->eval() + expr->eval();
+      case Op::Sub: return term->eval() - expr->eval();
+      default: return term->eval();
+    }
+  }
+
+  enum class Op { Add, Sub, Identity } op;
+  std::optional<Term> term;
+  Indirect<Expr> expr;
+};
+
+Factor::Factor(LeftParenthesis, Expr expr, RightParenthesis) : expr(expr) {
 }
 Factor::Factor(Number n) : n(n) {
 }
 int Factor::eval() const {
-  return term ? term->eval() : n->eval();
+  return expr ? expr->eval() : n->eval();
 }
-
-struct Expr {
-  Expr(Term term) : term(term) {
-  }
-
-  int eval() const {
-    return term.eval();
-  }
-
-  Term term;
-};
 
 #define CHECK_ANSWER(x)                                                                            \
   if (auto val = eval(#x)) {                                                                       \
@@ -147,27 +138,26 @@ struct Expr {
     else                                                                                           \
       std::cout << "Answer to [" #x "] is not correct: " << *val << ", should be " << (x) << '\n'; \
   } else {                                                                                         \
-    std::cout << "When processing [" #x "]: " << val.error() << '\n';                                \
+    std::cout << "When processing [" #x "]: " << val.error() << '\n';                              \
     exit(1);                                                                                       \
   }
 
 int main() {
-  // 
+  //
   tiny_bnf::Specification spec;
   tiny_bnf::alternatives(spec, "digit", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
   spec["number"] += "number", "digit";
   spec["number"] += "digit";
 
-  spec["factor"] += "(", "term", ")";
+  spec["factor"] += "(", "expr", ")";
   spec["factor"] += "number";
 
-  spec["term"] += "term", "*", "factor";
-  spec["term"] += "term", "/", "factor";
-
-  spec["term"] += "term", "+", "term";
-  spec["term"] += "term", "-", "term";
+  spec["term"] += "factor", "*", "term";
+  spec["term"] += "factor", "/", "term";
   spec["term"] += "factor";
 
+  spec["expr"] += "term", "+", "expr";
+  spec["expr"] += "term", "-", "expr";
   spec["expr"] += "term";
 
   //
@@ -196,10 +186,9 @@ int main() {
   gen.bind<Divide>("/");
   gen.bind<LeftParenthesis>("(");
   gen.bind<RightParenthesis>(")");
-  gen.bind<Factor>("factor", Ctor<LeftParenthesis, Term, RightParenthesis>{}, Ctor<Number>{});
-  gen.bind<Term>("term", Ctor<Term, Multiply, Factor>{}, Ctor<Term, Divide, Factor>{}, Ctor<Term, Add, Term>{},
-                 Ctor<Term, Subtract, Term>{}, Ctor<Factor>{});
-  gen.bind<Expr>("expr", Ctor<Term>{});
+  gen.bind<Factor>("factor", Ctor<LeftParenthesis, Expr, RightParenthesis>{}, Ctor<Number>{});
+  gen.bind<Term>("term", Ctor<Factor, Multiply, Term>{}, Ctor<Factor, Divide, Term>{}, Ctor<Factor>{});
+  gen.bind<Expr>("expr", Ctor<Term, Add, Expr>{}, Ctor<Term, Subtract, Expr>{}, Ctor<Term>{});
 
   //
   auto eval = [&](auto input) -> tiny_bnf::Expected<int> {
@@ -207,7 +196,7 @@ int main() {
     if (!tokens)
       return tiny_bnf::Error<>("Failed to tokenize: " + tokens.error());
 
-    auto tree = tiny_bnf::parse(spec, *tokens);
+    auto tree = tiny_bnf::parseTopdown(spec, *tokens);
     if (!tree)
       return tiny_bnf::Error<>("Failed to parse: " + tree.error());
 
@@ -218,12 +207,16 @@ int main() {
     return expr->eval();
   };
 
+  CHECK_ANSWER(7);
+  CHECK_ANSWER(7 + 2);
   CHECK_ANSWER(7 * 2);
-  CHECK_ANSWER(1 * 2 + 3);
+  CHECK_ANSWER(1 + 2 + 3);
+  CHECK_ANSWER((1 + 2));
   CHECK_ANSWER(3 + 1 * 2);
   CHECK_ANSWER(6 * 2);
   CHECK_ANSWER(6 * (3 + 2));
   CHECK_ANSWER(6 * (3 * 2));
+  CHECK_ANSWER(3 * 2 * 6);
   CHECK_ANSWER((3 * 2) * 6);
   CHECK_ANSWER((3 + 2) * 6);
   CHECK_ANSWER((3 + 2) * (1 + 2));
