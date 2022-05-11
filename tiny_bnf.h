@@ -192,7 +192,7 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
     
     auto exprs = rules[symbol];
     
-    return std::accumulate(std::begin(exprs), std::end(exprs), R{}, [&, p](auto ret, const auto& expr) -> R{
+    return std::accumulate(std::begin(exprs), std::end(exprs), R{}, [&, p](auto ret, const auto& expr)mutable -> R{
       if(ret) return ret;
       
       Node node{symbol, {}};
