@@ -205,7 +205,7 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
           return std::nullopt;
         }
       }    
-      return {node, p};
+      return std::pair{node, p};
     });
   };
 
