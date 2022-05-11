@@ -50,17 +50,21 @@ int eval(Digit d) {
 }
 
 struct Number {
-  Number(Number n, Digit d) : n(n), d(d) {
+  Number(Digit d, Number n) : d(d), n(n) {
   }
   Number(Digit d) : d(d) {
   }
 
   int eval() const {
-    return n ? n->eval() * 10 + ::eval(d) : ::eval(d);
+    return n ? n->helper(d) : ::eval(d);
+  }
+  
+  int helper(int d) const {
+    return n ? 10 * n->helper(d) + n->helper(this->d) : 10 * d + this->d;
   }
 
-  Indirect<Number> n;
   Digit d;
+  Indirect<Number> n;
 };
 
 struct LeftParenthesis {};
