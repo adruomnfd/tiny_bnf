@@ -146,7 +146,7 @@ template<typename It, typename T, typename U, typename F>
 auto accumulate_n(It it, T n, U init, F f){
    for(T i = 0; i < n; ++i)
       init = f(init, it++);
-  return n;
+  return init;
 }
 
 Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
