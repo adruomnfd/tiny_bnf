@@ -192,9 +192,10 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
     
     auto exprs = rules[symbol];
     
-    return std::accumulate(std::begin(exprs), std::end(exprs), R{}, [&, p](auto ret, const auto& expr)mutable -> R{
+    return std::accumulate(std::begin(exprs), std::end(exprs), R{}, [&](auto ret, const auto& expr) -> R{
       if(ret) return ret;
       
+      auto p_backup = p;
       Node node{symbol, {}};
       for(auto e: expr){
         if(auto opt = parse(parse, e, p)){
@@ -202,6 +203,7 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
           p = np;
           node.children.push_back(n);
         }else {
+          p = p_backup;
           return std::nullopt;
         }
       }
