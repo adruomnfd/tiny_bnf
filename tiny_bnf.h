@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <variant>
 
 namespace tiny_bnf {
 
@@ -34,34 +35,33 @@ template <typename T, typename ErrorRepr = std::string>
 struct Expected {
   Expected(T value) : value(std::move(value)) {
   }
-  Expected(Error<ErrorRepr> error_) : error_(std::move(error_)) {
+  Expected(Error<ErrorRepr> error) : value(std::move(error)) {
   }
 
   explicit operator bool() const {
-    return (bool)value;
+    return value.index() == 0;
   }
 
   T &operator*() {
-    return *value;
+    return std::get<0>(value);
   }
   const T &operator*() const {
-    return *value;
+    return std::get<0>(value);
   }
 
-  auto &operator->() {
-    return value;
+  auto operator->() {
+    return &std::get<0>(value);
   }
-  const auto &operator->() const {
-    return value;
+   auto operator->() const {
+    return &std::get<0>(value);
   }
 
   const auto &error() const {
-    return error_->value;
+    return std::get<1>(value);
   }
 
  private:
-  std::optional<T> value;
-  std::optional<Error<ErrorRepr>> error_;
+  std::variant<T, Error<ErrorRepr>> value;
 };
 
 struct Expression {
