@@ -59,8 +59,8 @@ struct Number {
     return n ? n->helper(d) : ::eval(d);
   }
   
-  int helper(int d) const {
-    return n ? 10 * n->helper(d) + n->helper(this->d) : 10 * d + this->d;
+  int helper(int num) const {
+    return n ? 10 * n->helper(d) + n->helper(d.eval()) : 10 * num + d.eval();
   }
 
   Digit d;
@@ -183,7 +183,7 @@ int main() {
   gen.bind<Nine>("9");
   gen.bind<Digit>("digit", Ctor<Zero>{}, Ctor<One>{}, Ctor<Two>{}, Ctor<Three>{}, Ctor<Four>{}, Ctor<Five>{},
                   Ctor<Six>{}, Ctor<Seven>{}, Ctor<Eight>{}, Ctor<Nine>{});
-  gen.bind<Number>("number", Ctor<Number, Digit>{}, Ctor<Digit>{});
+  gen.bind<Number>("number", Ctor<Digit, Digit>{}, Ctor<Digit>{});
   gen.bind<Add>("+");
   gen.bind<Subtract>("-");
   gen.bind<Multiply>("*");
