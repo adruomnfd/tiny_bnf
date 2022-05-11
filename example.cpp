@@ -56,11 +56,11 @@ struct Number {
   }
 
   int eval() const {
-    return n ? n->helper(d) : ::eval(d);
+    return n ? n->helper(::eval(d)) : ::eval(d);
   }
   
   int helper(int num) const {
-    return n ? 10 * n->helper(num) + n->helper(d.eval()) : 10 * num + d.eval();
+    return n ? 10 * n->helper(num) + n->helper(::eval(d)) : 10 * num + ::eval(d);
   }
 
   Digit d;
