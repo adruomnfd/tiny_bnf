@@ -142,7 +142,7 @@ struct Node {
 };
 using Tokens = std::vector<Node>;
   
-template<typename It, typename T, typename U>
+template<typename It, typename T, typename U, typename F>
 auto accumulate_n(It it, T n, U init, F f){
    for(T i = 0; i < n; ++i)
       init = f(init, it++);
