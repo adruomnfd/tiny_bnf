@@ -168,79 +168,49 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
     return Error<>("Unused string: " + (std::string)input.substr(n));
 }
 
+auto collectUniqueRules(const std::vector<Rule>& rules){
+    std::map<std::string, std::vector<Expression>> unique;
+    for(const auto& rule: rules)
+        unique[rule.symbol].push_back(rule.expression);
+    return unique;
+}
+
 Expected<Node> parseTopdown(const Specification &spec, Tokens tokens, std::vector<std::string> *log = nullptr) {
-  std::map<std::string, std::vector<Expression>> uniqueSymbols;
-  for (const auto &rule : spec)
-    uniqueSymbols[rule.symbol].push_back(rule.expression);
-
-  auto symbol = spec.rules.back().symbol;
-
-  size_t first = 0;
-  size_t last = std::size(tokens);
-
-  auto parse = [&](auto &parse, std::string symbol, int depth = 0) -> std::optional<Node> {
-    if (first >= last)
+  auto rules = collectUniqueRules(spec.rules);
+  
+  using R = std::optional<std::pair<Node, size_t>>;
+  auto parse = [&](auto &parse, std::string symbol, size_t p) -> R {
+    if (p >= std::size(tokens))
       return std::nullopt;
 
-    size_t p = log ? log->size() : 0;
-    if (log)
-      log->push_back({});
-    if (log)
-      (*log)[p] += std::string(depth * 2, ' ') + '[' + symbol + ']';
-
-    if (uniqueSymbols.find(symbol) == std::end(uniqueSymbols)) {
-      if (tokens[first].symbol == symbol) {
-        ++first;
-        if (log)
-          (*log)[p] += u8"✓";
-        return Node{symbol, {}};
-      } else {
-        if (log)
-          (*log)[p] += u8"✗";
+    if (rules.find(symbol) == std::end(rules)) {
+      if (tokens[p].symbol == symbol) 
+        return std::pair{Node{symbol, {}}, p + 1};
+      else
         return std::nullopt;
-      }
     }
-
-    for (const auto &expr : uniqueSymbols[symbol]) {
-      if (last - first < std::size(expr.exprs))
-        continue;
-
-      auto first_backup = first;
-      ScopeGuard last_guard([&, backup = last]() { last = backup; });
-
+    
+    auto exprs = rules[symbol];
+    
+    auto it = std::accumulate(std::begin(exprs), std::end(exprs), R{}, [&](auto ret, const auto& expr){
+      if(ret) return ret;
+      
       Node node{symbol, {}};
-      bool ok = true;
-      last -= std::size(expr.exprs) - 1;
-
-      for (const auto &s : expr) {
-        if (auto n = parse(parse, s, depth + 1)) {
-          node.children.push_back(*n);
-        } else {
-          ok = false;
-          break;
+      for(auto e: expr){
+        if(auto opt = parse(parse, e, p){
+          auto [n, np] = *opt;
+          p = np;
+          node.children.push_back(n);
+        }else {
+          return std::nullopt;
         }
-        ++last;
       }
+           
+      return {node, p};
+    });
 
-      if ((depth == 0) && (first != std::size(tokens)))
-        ok = false;
-
-      if (ok) {
-        if (log)
-          (*log)[p] += u8"✓";
-        return node;
-      } else {
-        if (log)
-          (*log)[p] += u8"✗";
-        first = first_backup;
-      }
-    }
-
-    return std::nullopt;
-  };
-
-  if (auto node = parse(parse, symbol))
-    return *node;
+  if (auto opt = parse(parse, spec.rules.back().symbol))
+    return opt->second;
   else
     return Error<>("Failed to parse");
 }
