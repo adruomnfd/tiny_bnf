@@ -153,7 +153,7 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
   Tokens tokens;
   const auto &map = terminals.expr_to_sym;
 
-  auto n = accumulate_n(0, std::size(input), 0, [&](auto a, auto b) {
+  auto n = accumulate_n(1, std::size(input), 0, [&](auto a, auto b) {
     if (auto it = map.find(input.substr(a, b - a)); it != std::end(map)) {
       if (it->second != "")
         tokens.push_back({it->second, {}});
