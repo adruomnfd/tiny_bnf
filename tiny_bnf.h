@@ -57,7 +57,7 @@ struct Expected {
   }
 
   const auto &error() const {
-    return std::get<1>(value);
+    return std::get<1>(value).value;
   }
 
  private:
