@@ -146,7 +146,7 @@ int main() {
   //
   tiny_bnf::Specification spec;
   tiny_bnf::alternatives(spec, "digit", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
-  spec["number"] += "number", "digit";
+  spec["number"] += "digit", "number";
   spec["number"] += "digit";
 
   spec["factor"] += "(", "expr", ")";
