@@ -153,7 +153,7 @@ template<typename It, typename T, typename F>
 auto onFirst(It first, It last, T init, F f){
     return std::accumulate(first, last, init, [&](auto& a, auto& b){
         if(a) return a;
-        return f(b);
+        else return f(b);
     });
 }
 
@@ -200,7 +200,7 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
     
     auto exprs = rules[symbol];
     
-    return onFirst(std::begin(exprs), std::end(exprs), R{}, [&](auto ret, const auto& expr) -> R{
+    return onFirst(std::begin(exprs), std::end(exprs), R{}, [&](const auto& expr) -> R{
       auto p_backup = p;
       Node node{symbol, {}};
       for(auto e: expr){
@@ -213,7 +213,6 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
           return std::nullopt;
         }
       }
-      std::cout << symbol << '\n';
       return std::pair{node, p};
     });
   };
