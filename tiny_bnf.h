@@ -141,22 +141,28 @@ struct Node {
   std::vector<Node> children;
 };
 using Tokens = std::vector<Node>;
+  
+template<typename It, typename T, typename U>
+auto accumulate_n(It it, T n, U init, F f){
+   for(T i = 0; i < n; ++i)
+      init = f(init, it++);
+  return n;
+}
 
 Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
   Tokens tokens;
   const auto &map = terminals.expr_to_sym;
 
-  size_t a = 0, b = 0;
-  while (b != std::size(input)) {
-    ++b;
+  auto n = accumulate_n(0, std::size(input), 0, [&](auto a, auto b) {
     if (auto it = map.find(input.substr(a, b - a)); it != std::end(map)) {
       if (it->second != "")
         tokens.push_back({it->second, {}});
-      a = b;
+      return b;
     }
+    return a;
   }
 
-  if (a == b)
+  if (n == std::size(input))
     return tokens;
   else
     return Error<>("Unused string: " + (std::string)input.substr(a));
