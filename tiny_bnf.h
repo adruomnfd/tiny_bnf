@@ -153,7 +153,7 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
   Tokens tokens;
   const auto &map = terminals.expr_to_sym;
 
-  auto n = accumulateN(1, std::size(input), size_t{0}, [&](auto a, auto b) {
+  auto n = accumulateN(size_t{1}, std::size(input), size_t{0}, [&](auto a, auto b) {
     if (auto it = map.find(input.substr(a, b - a)); it != std::end(map)) {
       if (it->second != "")
         tokens.push_back({it->second, {}});
@@ -175,7 +175,7 @@ auto collectUniqueRules(const std::vector<Rule>& rules){
     return unique;
 }
 
-Expected<Node> parseTopdown(const Specification &spec, Tokens tokens, std::vector<std::string> *log = nullptr) {
+Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
   auto rules = collectUniqueRules(spec.rules);
   
   using R = std::optional<std::pair<Node, size_t>>;
@@ -209,7 +209,7 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens, std::vecto
     });
   };
 
-  if (auto opt = parse(parse, spec.rules.back().symbol))
+  if (auto opt = parse(parse, spec.rules.back().symbol, 0))
     return opt->second;
   else
     return Error<>("Failed to parse");
