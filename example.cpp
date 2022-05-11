@@ -183,7 +183,7 @@ int main() {
   gen.bind<Nine>("9");
   gen.bind<Digit>("digit", Ctor<Zero>{}, Ctor<One>{}, Ctor<Two>{}, Ctor<Three>{}, Ctor<Four>{}, Ctor<Five>{},
                   Ctor<Six>{}, Ctor<Seven>{}, Ctor<Eight>{}, Ctor<Nine>{});
-  gen.bind<Number>("number", Ctor<Digit, Digit>{}, Ctor<Digit>{});
+  gen.bind<Number>("number", Ctor<Digit, Number>{}, Ctor<Digit>{});
   gen.bind<Add>("+");
   gen.bind<Subtract>("-");
   gen.bind<Multiply>("*");
