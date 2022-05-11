@@ -148,12 +148,34 @@ auto accumulate_n(It it, T n, U init, F f){
       init = f(init, it++);
   return init;
 }
+  
+template<typename T>
+auto asIt(T x){
+  struct It{
+    It& operator++(){
+        ++x;
+        return *this;
+    }
+    
+    const T& operator*() const{
+       return x;
+    }
+    
+    bool operator==(const It& rhs){
+        return x == rhs.x;
+    }
+
+    T x;
+  };
+  
+  return It{x};
+}
 
 Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
   Tokens tokens;
   const auto &map = terminals.expr_to_sym;
 
-  auto n = accumulate_n(1, std::size(input), 0, [&](auto a, auto b) {
+  auto n = std::accumulate(asIt(size_t{1}), asIt(std::size(input)), 0, [&](auto a, auto b) {
     if (auto it = map.find(input.substr(a, b - a)); it != std::end(map)) {
       if (it->second != "")
         tokens.push_back({it->second, {}});
