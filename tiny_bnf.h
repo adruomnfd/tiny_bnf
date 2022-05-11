@@ -192,7 +192,7 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
     
     auto exprs = rules[symbol];
     
-    return std::accumulate(std::begin(exprs), std::end(exprs), R{}, [&](auto ret, const auto& expr){
+    return std::accumulate(std::begin(exprs), std::end(exprs), R{}, [&](auto ret, const auto& expr) -> R{
       if(ret) return ret;
       
       Node node{symbol, {}};
@@ -210,7 +210,7 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
   };
 
   if (auto opt = parse(parse, spec.rules.back().symbol, 0))
-    return opt->second;
+    return opt->first;
   else
     return Error<>("Failed to parse");
 }
