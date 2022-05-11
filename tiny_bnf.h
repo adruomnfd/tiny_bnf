@@ -182,6 +182,8 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
   auto parse = [&](auto &parse, std::string symbol, size_t p) -> R {
     if (p >= std::size(tokens))
       return std::nullopt;
+    
+    std::cout << symbol << '\n';
 
     if (rules.find(symbol) == std::end(rules)) {
       if (tokens[p].symbol == symbol) 
