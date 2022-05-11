@@ -148,6 +148,14 @@ auto accumulateN(It it, T n, U init, F f){
       init = f(init, it++);
   return init;
 }
+  
+template<typename It, typename T, typename F>
+auto onFirst(It first, It last, T init, F f){
+    return std::accumulate(first, last, init, [&](auto& a, auto& b){
+        if(a) return a;
+        return f(b);
+    });
+}
 
 Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
   Tokens tokens;
@@ -192,9 +200,7 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
     
     auto exprs = rules[symbol];
     
-    return std::accumulate(std::begin(exprs), std::end(exprs), R{}, [&](auto ret, const auto& expr) -> R{
-      if(ret) return ret;
-      
+    return onFirst(std::begin(exprs), std::end(exprs), R{}, [&](auto ret, const auto& expr) -> R{
       auto p_backup = p;
       Node node{symbol, {}};
       for(auto e: expr){
