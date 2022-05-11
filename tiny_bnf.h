@@ -153,7 +153,7 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
   Tokens tokens;
   const auto &map = terminals.expr_to_sym;
 
-  auto n = accumulateN(1, std::size(input), 0, [&](auto a, auto b) {
+  auto n = accumulateN(1, std::size(input), size_t{0}, [&](auto a, auto b) {
     if (auto it = map.find(input.substr(a, b - a)); it != std::end(map)) {
       if (it->second != "")
         tokens.push_back({it->second, {}});
@@ -192,22 +192,22 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens, std::vecto
     
     auto exprs = rules[symbol];
     
-    auto it = std::accumulate(std::begin(exprs), std::end(exprs), R{}, [&](auto ret, const auto& expr){
+    return std::accumulate(std::begin(exprs), std::end(exprs), R{}, [&](auto ret, const auto& expr){
       if(ret) return ret;
       
       Node node{symbol, {}};
       for(auto e: expr){
-        if(auto opt = parse(parse, e, p){
+        if(auto opt = parse(parse, e, p)){
           auto [n, np] = *opt;
           p = np;
           node.children.push_back(n);
         }else {
           return std::nullopt;
         }
-      }
-           
+      }    
       return {node, p};
     });
+  };
 
   if (auto opt = parse(parse, spec.rules.back().symbol))
     return opt->second;
