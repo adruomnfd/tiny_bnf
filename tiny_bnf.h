@@ -165,7 +165,7 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
   if (n == std::size(input))
     return tokens;
   else
-    return Error<>("Unused string: " + (std::string)input.substr(a));
+    return Error<>("Unused string: " + (std::string)input.substr(n));
 }
 
 Expected<Node> parseTopdown(const Specification &spec, Tokens tokens, std::vector<std::string> *log = nullptr) {
