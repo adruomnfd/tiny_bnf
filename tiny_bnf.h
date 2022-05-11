@@ -160,7 +160,7 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
       return b;
     }
     return a;
-  }
+  });
 
   if (n == std::size(input))
     return tokens;
