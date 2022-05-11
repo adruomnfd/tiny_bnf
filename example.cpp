@@ -60,7 +60,7 @@ struct Number {
   }
   
   int helper(int num) const {
-    return n ? 10 * n->helper(d) + n->helper(d.eval()) : 10 * num + d.eval();
+    return n ? 10 * n->helper(num) + n->helper(d.eval()) : 10 * num + d.eval();
   }
 
   Digit d;
