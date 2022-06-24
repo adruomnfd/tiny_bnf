@@ -58,7 +58,7 @@ struct Number {
   int eval() const {
     return n ? n->helper(::eval(d)) : ::eval(d);
   }
-  
+
   int helper(int num) const {
     return n ? 10 * n->helper(num) + n->helper(::eval(d)) : 10 * num + ::eval(d);
   }
@@ -135,6 +135,17 @@ int Factor::eval() const {
   return expr ? expr->eval() : n->eval();
 }
 
+struct Stmt {
+  Stmt(Expr expr) : expr(expr) {
+  }
+
+  int eval() const {
+    return expr.eval();
+  }
+
+  Expr expr;
+};
+
 #define CHECK_ANSWER(x)                                                                            \
   if (auto val = eval(#x)) {                                                                       \
     if (*val == (x))                                                                               \
@@ -146,23 +157,33 @@ int Factor::eval() const {
     exit(1);                                                                                       \
   }
 
+void debugTree(tiny_bnf::Node node, int depth = 0) {
+  std::cout << std::string(depth, ' ') << node.symbol << '\n';
+  for (auto child : node.children)
+    debugTree(child, depth + 1);
+}
+
 int main() {
   //
   tiny_bnf::Specification spec;
-  tiny_bnf::alternatives(spec, "digit", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
-  spec["number"] += "digit", "number";
-  spec["number"] += "digit";
 
-  spec["factor"] += "(", "expr", ")";
-  spec["factor"] += "number";
+  spec["stmt"] += "expr";
+
+  spec["expr"] += "term", "+", "expr";
+  spec["expr"] += "term", "-", "expr";
+  spec["expr"] += "term";
 
   spec["term"] += "factor", "*", "term";
   spec["term"] += "factor", "/", "term";
   spec["term"] += "factor";
 
-  spec["expr"] += "term", "+", "expr";
-  spec["expr"] += "term", "-", "expr";
-  spec["expr"] += "term";
+  spec["factor"] += "(", "expr", ")";
+  spec["factor"] += "number";
+
+  spec["number"] += "digit", "number";
+  spec["number"] += "digit";
+
+  tiny_bnf::alt(spec, "digit", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
 
   //
   tiny_bnf::Terminals terminals = autoTerminals(spec);
@@ -193,6 +214,7 @@ int main() {
   gen.bind<Factor>("factor", Ctor<LeftParenthesis, Expr, RightParenthesis>{}, Ctor<Number>{});
   gen.bind<Term>("term", Ctor<Factor, Multiply, Term>{}, Ctor<Factor, Divide, Term>{}, Ctor<Factor>{});
   gen.bind<Expr>("expr", Ctor<Term, Add, Expr>{}, Ctor<Term, Subtract, Expr>{}, Ctor<Term>{});
+  gen.bind<Stmt>("stmt", Ctor<Expr>{});
 
   //
   auto eval = [&](auto input) -> tiny_bnf::Expected<int> {
@@ -200,15 +222,17 @@ int main() {
     if (!tokens)
       return tiny_bnf::Error<>("Failed to tokenize: " + tokens.error());
 
-    auto tree = tiny_bnf::parseTopdown(spec, *tokens);
+    auto tree = tiny_bnf::parse(spec, *tokens, tiny_bnf::ParserType::Earley);
+    // debugTree(*tree);
+
     if (!tree)
       return tiny_bnf::Error<>("Failed to parse: " + tree.error());
 
-    auto expr = tiny_bnf::generate<Expr>(gen, *tree);
-    if (!expr)
-      return tiny_bnf::Error<>("Failed to generate: " + expr.error());
+    auto stmt = tiny_bnf::generate<Stmt>(gen, *tree);
+    if (!stmt)
+      return tiny_bnf::Error<>("Failed to generate: " + stmt.error());
 
-    return expr->eval();
+    return stmt->eval();
   };
 
   CHECK_ANSWER(7);

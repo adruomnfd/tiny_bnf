@@ -5,10 +5,11 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
-#include <vector>
 #include <variant>
+#include <vector>
 
 namespace tiny_bnf {
 
@@ -52,7 +53,7 @@ struct Expected {
   auto operator->() {
     return &std::get<0>(value);
   }
-   auto operator->() const {
+  auto operator->() const {
     return &std::get<0>(value);
   }
 
@@ -89,6 +90,13 @@ struct Rule {
   Expression expression;
 };
 
+bool operator<(const Expression &l, const Expression &r) {
+  return l.exprs < r.exprs;
+}
+bool operator<(const Rule &l, const Rule &r) {
+  return l.symbol == r.symbol ? l.expression < r.expression : l.symbol < r.symbol;
+}
+
 struct Specification {
   Expression &operator[](std::string symbol) {
     rules.push_back(Rule{std::move(symbol), {}});
@@ -106,7 +114,7 @@ struct Specification {
 };
 
 template <typename... Ts>
-void alternatives(Specification &spec, std::string symbol, Ts... exprs) {
+void alt(Specification &spec, std::string symbol, Ts... exprs) {
   ((spec[symbol] += std::move(exprs)), ...);
 }
 
@@ -141,20 +149,21 @@ struct Node {
   std::vector<Node> children;
 };
 using Tokens = std::vector<Node>;
-  
-template<typename It, typename T, typename U, typename F>
-auto accumulateN(It it, T n, U init, F f){
-   for(T i = 0; i < n; ++i)
-      init = f(init, it++);
+
+template <typename It, typename T, typename U, typename F>
+auto accumulateN(It it, T n, U init, F f) {
+  for (T i = 0; i < n; ++i)
+    init = f(init, it++);
   return init;
 }
-  
-template<typename It, typename T, typename F>
-auto onFirst(It first, It last, T init, F f){
-    return std::accumulate(first, last, init, [&](auto& a, auto& b){
-        if(a) return a;
-        else return f(b);
-    });
+
+template <typename It, typename T, typename F>
+auto onFirst(It first, It last, T init, F f) {
+  for (; first != last; ++first)
+    if (auto a = f(*first))
+      return a;
+
+  return init;
 }
 
 Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
@@ -176,53 +185,109 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
     return Error<>("Unused string: " + (std::string)input.substr(n));
 }
 
-auto collectUniqueRules(const std::vector<Rule>& rules){
-    std::map<std::string, std::vector<Expression>> unique;
-    for(const auto& rule: rules)
-        unique[rule.symbol].push_back(rule.expression);
-    return unique;
+auto collectUniqueRules(const std::vector<Rule> &rules) {
+  std::map<std::string, std::vector<Expression>> unique;
+  for (const auto &rule : rules)
+    unique[rule.symbol].push_back(rule.expression);
+  return unique;
 }
 
-Expected<Node> parseEarley(const Specification& spec, Tokens tokens) {
-  struct State{
-    int i = 0;
-    int p = 0;
+Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
+  struct State {
+    size_t i = 0;
+    size_t p = 0;
     Rule rule;
     Node node;
   };
-  using StateSet = std::vector<State>;
-  
-  std::vector<StateSet> stateSets{{State{0, 0, spec.rules[0], Node{spec.rules[0].symbol, {}}}}};
-  
-  
+
+  std::vector<std::string> input;
+  for (auto &token : tokens)
+    input.push_back(std::move(token.symbol));
+
+  auto stateSets = std::vector<std::vector<State>>(size(input) + 1);
+  stateSets[0].push_back(State{0, 0, spec.rules.front(), Node{spec.rules.front().symbol, {}}});
+
+  auto isComplete = [&](const auto &state) { return state.p == size(state.rule.expression.exprs); };
+  auto match = [&](const auto &state, const auto &c) {
+    if (isComplete(state))
+      return false;
+    return state.rule.expression.exprs[state.p] == c;
+  };
+
+  for (size_t k = 0; k <= size(input); ++k) {
+    // scanning
+    if (k != 0) {
+      for (auto s : stateSets[k - 1])
+        if (match(s, input[k - 1])) {
+          s.p += 1;
+          s.node.children.push_back(Node{input[k - 1], {}});
+          stateSets[k].push_back(std::move(s));
+        }
+    }
+
+    // completion
+    for (size_t i = 0; i < size(stateSets[k]); ++i) {
+      const auto s = stateSets[k][i];
+      if (isComplete(s)) {
+        for (auto ss : stateSets[s.i])
+          if (match(ss, s.rule.symbol)) {
+            ss.p += 1;
+            ss.node.children.push_back(s.node);
+            stateSets[k].push_back(std::move(ss));
+          }
+      }
+    }
+
+    // prediction
+    std::set<Rule> record;
+    for (size_t i = 0; i < size(stateSets[k]); ++i) {
+      const auto s = stateSets[k][i];
+      if (!isComplete(s)) {
+        for (auto rule : spec.rules) {
+          if (rule.symbol == s.rule.expression.exprs[s.p]) {
+            if (record.find(rule) == record.end()) {
+              record.insert(rule);
+              stateSets[k].push_back(State{k, 0, rule, Node{rule.symbol, {}}});
+            }
+          }
+        }
+      }
+    }
+  }
+
+  for (auto s : stateSets.back())
+    if (s.node.symbol == spec.rules.front().symbol)
+      return s.node;
+
+  return Error<>("Failed to parse");
 }
 
 Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
   auto rules = collectUniqueRules(spec.rules);
-  
   using R = std::optional<std::pair<Node, size_t>>;
+
   auto parse = [&](auto &parse, std::string symbol, size_t p) -> R {
     if (p >= std::size(tokens))
       return std::nullopt;
 
     if (rules.find(symbol) == std::end(rules)) {
-      if (tokens[p].symbol == symbol) 
+      if (tokens[p].symbol == symbol)
         return std::pair{Node{symbol, {}}, p + 1};
       else
         return std::nullopt;
     }
-    
+
     auto exprs = rules[symbol];
-    
-    return onFirst(std::begin(exprs), std::end(exprs), R{}, [&](const auto& expr) -> R{
+
+    return onFirst(std::begin(exprs), std::end(exprs), R{}, [&](const auto &expr) -> R {
       auto p_backup = p;
       Node node{symbol, {}};
-      for(auto e: expr){
-        if(auto opt = parse(parse, e, p)){
+      for (auto e : expr) {
+        if (auto opt = parse(parse, e, p)) {
           auto [n, np] = *opt;
           p = np;
           node.children.push_back(n);
-        }else {
+        } else {
           p = p_backup;
           return std::nullopt;
         }
@@ -231,10 +296,20 @@ Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
     });
   };
 
-  if (auto opt = parse(parse, spec.rules.back().symbol, 0))
+  if (auto opt = parse(parse, spec.rules.front().symbol, 0))
     return opt->first;
   else
     return Error<>("Failed to parse");
+}
+
+enum ParserType { Earley, Topdown };
+
+Expected<Node> parse(const Specification &spec, Tokens tokens, ParserType parserType = ParserType::Earley) {
+  switch (parserType) {
+    case ParserType::Earley: return parseEarley(spec, std::move(tokens));
+    case ParserType::Topdown: return parseTopdown(spec, std::move(tokens));
+    default: return Error<>("Invalid parser type");
+  }
 }
 
 template <typename... Ts>
