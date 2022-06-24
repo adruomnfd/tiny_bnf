@@ -66,15 +66,6 @@ struct Expected {
 };
 
 struct Expression {
-  Expression &operator+=(std::string symbol) {
-    exprs.push_back(std::move(symbol));
-    return *this;
-  }
-  Expression &operator,(std::string symbol) {
-    exprs.push_back(std::move(symbol));
-    return *this;
-  }
-
   auto begin() const {
     return std::begin(exprs);
   }
@@ -98,16 +89,34 @@ bool operator<(const Rule &l, const Rule &r) {
 }
 
 struct Specification {
-  Expression &operator[](std::string symbol) {
+  Specification &operator[](std::string symbol) {
     rules.push_back(Rule{std::move(symbol), {}});
-    return rules.back().expression;
+    return *this;
   }
+  Specification &operator+=(std::string symbol) {
+    rules.back().exprs.push_back(std::move(symbol));
+    return *this;
+  }
+  Specification &operator,(std::string symbol) {
+    rules.back().exprs.push_back(std::move(symbol));
+    return *this;
+  }
+  Specification &operator|(std::string symbol) {
+    cloneLast();
+    rules.back().exprs.push_back(std::move(symbol));
+    return *this;
+  }
+  
 
   auto begin() const {
     return std::begin(rules);
   }
   auto end() const {
     return std::end(rules);
+  }
+  
+  void cloneLast(){
+    rules.push_back(Rule{rules.back().symbol, {}});
   }
 
   std::vector<Rule> rules;
