@@ -183,6 +183,20 @@ auto collectUniqueRules(const std::vector<Rule>& rules){
     return unique;
 }
 
+Expected<Node> parseEarley(const Specification& spec, Tokens tokens) {
+  struct State{
+    int i = 0;
+    int p = 0;
+    Rule rule;
+    Node node;
+  };
+  using StateSet = std::vector<State>;
+  
+  std::vector<StateSet> stateSets{State{0, 0, spec.rules[0], Node{spec.rules[0].symbol, {}}};
+  
+  
+}
+
 Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
   auto rules = collectUniqueRules(spec.rules);
   
