@@ -94,16 +94,16 @@ struct Specification {
     return *this;
   }
   Specification &operator+=(std::string symbol) {
-    rules.back().exprs.push_back(std::move(symbol));
+    rules.back().expression.exprs.push_back(std::move(symbol));
     return *this;
   }
   Specification &operator,(std::string symbol) {
-    rules.back().exprs.push_back(std::move(symbol));
+    rules.back().expression.exprs.push_back(std::move(symbol));
     return *this;
   }
   Specification &operator|(std::string symbol) {
     cloneLast();
-    rules.back().exprs.push_back(std::move(symbol));
+    rules.back().expression.exprs.push_back(std::move(symbol));
     return *this;
   }
   
