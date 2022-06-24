@@ -65,27 +65,13 @@ struct Expected {
   std::variant<T, Error<ErrorRepr>> value;
 };
 
-struct Expression {
-  auto begin() const {
-    return std::begin(exprs);
-  }
-  auto end() const {
-    return std::end(exprs);
-  }
-
-  std::vector<std::string> exprs;
-};
-
 struct Rule {
   std::string symbol;
-  Expression expression;
+  std::vector<std::string> expr;
 };
-
-bool operator<(const Expression &l, const Expression &r) {
-  return l.exprs < r.exprs;
-}
+  
 bool operator<(const Rule &l, const Rule &r) {
-  return l.symbol == r.symbol ? l.expression < r.expression : l.symbol < r.symbol;
+  return l.symbol == r.symbol ? l.expr < r.expr : l.symbol < r.symbol;
 }
 
 struct Specification {
@@ -93,21 +79,20 @@ struct Specification {
     rules.push_back(Rule{std::move(symbol), {}});
     return *this;
   }
-  Specification &operator+=(std::string symbol) {
-    rules.back().expression.exprs.push_back(std::move(symbol));
+  Specification &operator<=(std::string symbol){
+    rules.back().expr.push_back(std::move(symbol));
     return *this;
   }
   Specification &operator,(std::string symbol) {
-    rules.back().expression.exprs.push_back(std::move(symbol));
+    rules.back().expr.push_back(std::move(symbol));
     return *this;
   }
   Specification &operator|(std::string symbol) {
     cloneLast();
-    rules.back().expression.exprs.push_back(std::move(symbol));
+    rules.back().expr.push_back(std::move(symbol));
     return *this;
   }
   
-
   auto begin() const {
     return std::begin(rules);
   }
@@ -122,11 +107,6 @@ struct Specification {
   std::vector<Rule> rules;
 };
 
-template <typename... Ts>
-void alt(Specification &spec, std::string symbol, Ts... exprs) {
-  ((spec[symbol] += std::move(exprs)), ...);
-}
-
 struct Terminals {
   std::string &operator[](std::string expr) {
     return expr_to_sym[expr] = expr;
@@ -140,7 +120,7 @@ Terminals autoTerminals(const Specification &spec) {
   std::map<std::string, bool> ts;
 
   for (const auto &rule : spec)
-    for (const auto &expr : rule.expression)
+    for (const auto &expr : rule.expr)
       ts[expr] = true;
 
   for (const auto &rule : spec)
@@ -157,21 +137,12 @@ struct Node {
   std::string symbol;
   std::vector<Node> children;
 };
-using Tokens = std::vector<Node>;
+using Tokens = std::vector<std::string>;
 
 template <typename It, typename T, typename U, typename F>
 auto accumulateN(It it, T n, U init, F f) {
   for (T i = 0; i < n; ++i)
     init = f(init, it++);
-  return init;
-}
-
-template <typename It, typename T, typename F>
-auto onFirst(It first, It last, T init, F f) {
-  for (; first != last; ++first)
-    if (auto a = f(*first))
-      return a;
-
   return init;
 }
 
@@ -182,7 +153,7 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
   auto n = accumulateN(size_t{1}, std::size(input), size_t{0}, [&](auto a, auto b) {
     if (auto it = map.find(input.substr(a, b - a)); it != std::end(map)) {
       if (it->second != "")
-        tokens.push_back({it->second, {}});
+        tokens.push_back(it->second);
       return b;
     }
     return a;
@@ -194,13 +165,6 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
     return Error<>("Unused string: " + (std::string)input.substr(n));
 }
 
-auto collectUniqueRules(const std::vector<Rule> &rules) {
-  std::map<std::string, std::vector<Expression>> unique;
-  for (const auto &rule : rules)
-    unique[rule.symbol].push_back(rule.expression);
-  return unique;
-}
-
 Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
   struct State {
     size_t i = 0;
@@ -209,27 +173,23 @@ Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
     Node node;
   };
 
-  std::vector<std::string> input;
-  for (auto &token : tokens)
-    input.push_back(std::move(token.symbol));
-
-  auto stateSets = std::vector<std::vector<State>>(size(input) + 1);
+  auto stateSets = std::vector<std::vector<State>>(size(tokens) + 1);
   stateSets[0].push_back(State{0, 0, spec.rules.front(), Node{spec.rules.front().symbol, {}}});
 
-  auto isComplete = [&](const auto &state) { return state.p == size(state.rule.expression.exprs); };
+  auto isComplete = [&](const auto &state) { return state.p == size(state.rule.expr); };
   auto match = [&](const auto &state, const auto &c) {
     if (isComplete(state))
       return false;
-    return state.rule.expression.exprs[state.p] == c;
+    return state.rule.expr[state.p] == c;
   };
 
-  for (size_t k = 0; k <= size(input); ++k) {
+  for (size_t k = 0; k <= size(tokens); ++k) {
     // scanning
     if (k != 0) {
       for (auto s : stateSets[k - 1])
-        if (match(s, input[k - 1])) {
+        if (match(s, tokens[k - 1])) {
           s.p += 1;
-          s.node.children.push_back(Node{input[k - 1], {}});
+          s.node.children.push_back(Node{tokens[k - 1], {}});
           stateSets[k].push_back(std::move(s));
         }
     }
@@ -253,7 +213,7 @@ Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
       const auto s = stateSets[k][i];
       if (!isComplete(s)) {
         for (auto rule : spec.rules) {
-          if (rule.symbol == s.rule.expression.exprs[s.p]) {
+          if (rule.symbol == s.rule.expr[s.p]) {
             if (record.find(rule) == record.end()) {
               record.insert(rule);
               stateSets[k].push_back(State{k, 0, rule, Node{rule.symbol, {}}});
@@ -271,52 +231,11 @@ Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
   return Error<>("Failed to parse");
 }
 
-Expected<Node> parseTopdown(const Specification &spec, Tokens tokens) {
-  auto rules = collectUniqueRules(spec.rules);
-  using R = std::optional<std::pair<Node, size_t>>;
-
-  auto parse = [&](auto &parse, std::string symbol, size_t p) -> R {
-    if (p >= std::size(tokens))
-      return std::nullopt;
-
-    if (rules.find(symbol) == std::end(rules)) {
-      if (tokens[p].symbol == symbol)
-        return std::pair{Node{symbol, {}}, p + 1};
-      else
-        return std::nullopt;
-    }
-
-    auto exprs = rules[symbol];
-
-    return onFirst(std::begin(exprs), std::end(exprs), R{}, [&](const auto &expr) -> R {
-      auto p_backup = p;
-      Node node{symbol, {}};
-      for (auto e : expr) {
-        if (auto opt = parse(parse, e, p)) {
-          auto [n, np] = *opt;
-          p = np;
-          node.children.push_back(n);
-        } else {
-          p = p_backup;
-          return std::nullopt;
-        }
-      }
-      return std::pair{node, p};
-    });
-  };
-
-  if (auto opt = parse(parse, spec.rules.front().symbol, 0))
-    return opt->first;
-  else
-    return Error<>("Failed to parse");
-}
-
-enum ParserType { Earley, Topdown };
+enum ParserType { Earley };
 
 Expected<Node> parse(const Specification &spec, Tokens tokens, ParserType parserType = ParserType::Earley) {
   switch (parserType) {
     case ParserType::Earley: return parseEarley(spec, std::move(tokens));
-    case ParserType::Topdown: return parseTopdown(spec, std::move(tokens));
     default: return Error<>("Invalid parser type");
   }
 }
