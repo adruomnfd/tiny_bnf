@@ -192,7 +192,7 @@ Expected<Node> parseEarley(const Specification& spec, Tokens tokens) {
   };
   using StateSet = std::vector<State>;
   
-  std::vector<StateSet> stateSets{State{0, 0, spec.rules[0], Node{spec.rules[0].symbol, {}}}};
+  std::vector<StateSet> stateSets{{State{0, 0, spec.rules[0], Node{spec.rules[0].symbol, {}}}}};
   
   
 }
