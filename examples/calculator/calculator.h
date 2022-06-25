@@ -49,23 +49,40 @@ int eval(Digit d) {
       d);
 }
 
-struct Number {
-  Number(Digit d, Number n) : d(d), n(n) {
+struct Integer {
+  Integer(Digit d) : d(d) {
   }
-  Number(Digit d) : d(d) {
+  Integer(Integer n, Digit d) : n(n), d(d) {
   }
 
   int eval() const {
-    return n ? n->helper(::eval(d)) : ::eval(d);
+    return (n ? n->eval() * 10 : 0) + ::eval(d);
   }
 
-  int helper(int num) const {
-    return n ? 10 * n->helper(num) + n->helper(::eval(d)) : 10 * num + ::eval(d);
-  }
-
+  Indirect<Integer> n;
   Digit d;
-  Indirect<Number> n;
 };
+
+struct Dot {};
+
+struct FloatingPoint {
+  FloatingPoint(Integer n) : n(n) {
+  }
+  FloatingPoint(Integer n, Dot, Integer f) : n(n), f(f) {
+  }
+
+  float eval() const {
+    float nf = f ? f->eval() : 0;
+    while (nf >= 1.0f)
+      nf /= 10;
+    return n.eval() + nf;
+  }
+
+  Integer n;
+  std::optional<Integer> f;
+};
+
+using Number = FloatingPoint;
 
 struct LeftParenthesis {};
 struct RightParenthesis {};
@@ -79,7 +96,7 @@ struct Factor {
   Factor(LeftParenthesis, struct Expr, RightParenthesis);
   Factor(Number);
 
-  int eval() const;
+  float eval() const;
 
   std::optional<Number> n;
   Indirect<struct Expr> expr;
@@ -93,7 +110,7 @@ struct Term {
   Term(Factor factor) : op(Op::Identity), factor(factor) {
   }
 
-  int eval() const {
+  float eval() const {
     switch (op) {
       case Op::Mul: return factor->eval() * term->eval();
       case Op::Div: return factor->eval() / term->eval();
@@ -114,7 +131,7 @@ struct Expr {
   Expr(Term term) : op(Op::Identity), term(term) {
   }
 
-  int eval() const {
+  float eval() const {
     switch (op) {
       case Op::Add: return term->eval() + expr->eval();
       case Op::Sub: return term->eval() - expr->eval();
@@ -131,7 +148,7 @@ Factor::Factor(LeftParenthesis, Expr expr, RightParenthesis) : expr(expr) {
 }
 Factor::Factor(Number n) : n(n) {
 }
-int Factor::eval() const {
+float Factor::eval() const {
   return expr ? expr->eval() : n->eval();
 }
 
@@ -139,23 +156,12 @@ struct Stmt {
   Stmt(Expr expr) : expr(expr) {
   }
 
-  int eval() const {
+  float eval() const {
     return expr.eval();
   }
 
   Expr expr;
 };
-
-#define CHECK_ANSWER(x)                                                                            \
-  if (auto val = eval(#x)) {                                                                       \
-    if (*val == (x))                                                                               \
-      std::cout << #x << " = " << *val << '\n';                                                    \
-    else                                                                                           \
-      std::cout << "Answer to [" #x "] is not correct: " << *val << ", should be " << (x) << '\n'; \
-  } else {                                                                                         \
-    std::cout << "When processing [" #x "]: " << val.error() << '\n';                              \
-    exit(1);                                                                                       \
-  }
 
 void debugTree(tiny_bnf::Node node, int depth = 0) {
   std::cout << std::string(depth, ' ') << node.symbol << '\n';
@@ -163,8 +169,7 @@ void debugTree(tiny_bnf::Node node, int depth = 0) {
     debugTree(child, depth + 1);
 }
 
-int main() {
-  //
+auto buildParser() {
   tiny_bnf::Specification spec;
 
   spec["stmt"] <= "expr";
@@ -180,7 +185,9 @@ int main() {
   spec["factor"] <= "(", "expr", ")";
   spec["factor"] <= "number";
 
-  spec["number"] <= "digit" | "digit", "number";
+  spec["number"] <= "integer" | "integer", ".", "integer";
+
+  spec["integer"] <= "digit" | "integer", "digit";
 
   spec["digit"] <= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 
@@ -191,6 +198,14 @@ int main() {
   //
   using tiny_bnf::Ctor;
   tiny_bnf::Generator gen;
+  gen.bind<Stmt>("stmt", Ctor<Expr>{});
+  gen.bind<Expr>("expr", Ctor<Term, Add, Expr>{}, Ctor<Term, Subtract, Expr>{}, Ctor<Term>{});
+  gen.bind<Term>("term", Ctor<Factor, Multiply, Term>{}, Ctor<Factor, Divide, Term>{}, Ctor<Factor>{});
+  gen.bind<Factor>("factor", Ctor<LeftParenthesis, Expr, RightParenthesis>{}, Ctor<Number>{});
+  gen.bind<Integer>("integer", Ctor<Digit>{}, Ctor<Integer, Digit>{});
+  gen.bind<FloatingPoint>("number", Ctor<Integer>{}, Ctor<Integer, Dot, Integer>{});
+  gen.bind<Digit>("digit", Ctor<Zero>{}, Ctor<One>{}, Ctor<Two>{}, Ctor<Three>{}, Ctor<Four>{}, Ctor<Five>{},
+                  Ctor<Six>{}, Ctor<Seven>{}, Ctor<Eight>{}, Ctor<Nine>{});
   gen.bind<Zero>("0");
   gen.bind<One>("1");
   gen.bind<Two>("2");
@@ -201,54 +216,34 @@ int main() {
   gen.bind<Seven>("7");
   gen.bind<Eight>("8");
   gen.bind<Nine>("9");
-  gen.bind<Digit>("digit", Ctor<Zero>{}, Ctor<One>{}, Ctor<Two>{}, Ctor<Three>{}, Ctor<Four>{}, Ctor<Five>{},
-                  Ctor<Six>{}, Ctor<Seven>{}, Ctor<Eight>{}, Ctor<Nine>{});
-  gen.bind<Number>("number", Ctor<Digit, Number>{}, Ctor<Digit>{});
   gen.bind<Add>("+");
   gen.bind<Subtract>("-");
   gen.bind<Multiply>("*");
   gen.bind<Divide>("/");
   gen.bind<LeftParenthesis>("(");
   gen.bind<RightParenthesis>(")");
-  gen.bind<Factor>("factor", Ctor<LeftParenthesis, Expr, RightParenthesis>{}, Ctor<Number>{});
-  gen.bind<Term>("term", Ctor<Factor, Multiply, Term>{}, Ctor<Factor, Divide, Term>{}, Ctor<Factor>{});
-  gen.bind<Expr>("expr", Ctor<Term, Add, Expr>{}, Ctor<Term, Subtract, Expr>{}, Ctor<Term>{});
-  gen.bind<Stmt>("stmt", Ctor<Expr>{});
+  gen.bind<Dot>(".");
 
-  //
-  auto eval = [&](auto input) -> tiny_bnf::Expected<int> {
-    auto tokens = tiny_bnf::tokenize(terminals, input);
-    if (!tokens)
-      return tiny_bnf::Error<>("Failed to tokenize: " + tokens.error());
-
-    auto tree = tiny_bnf::parse(spec, *tokens, tiny_bnf::ParserType::Earley);
-    // debugTree(*tree);
-
-    if (!tree)
-      return tiny_bnf::Error<>("Failed to parse: " + tree.error());
-
-    auto stmt = tiny_bnf::generate<Stmt>(gen, *tree);
-    if (!stmt)
-      return tiny_bnf::Error<>("Failed to generate: " + stmt.error());
-
-    return stmt->eval();
-  };
-
-  CHECK_ANSWER(7);
-  CHECK_ANSWER(7 + 2);
-  CHECK_ANSWER(7 * 2);
-  CHECK_ANSWER(1 + 2 + 3);
-  CHECK_ANSWER((1 + 2));
-  CHECK_ANSWER(3 + 1 * 2);
-  CHECK_ANSWER(6 * 2);
-  CHECK_ANSWER(6 * (3 + 2));
-  CHECK_ANSWER(6 * (3 * 2));
-  CHECK_ANSWER(3 * 2 * 6);
-  CHECK_ANSWER((3 * 2) * 6);
-  CHECK_ANSWER((3 + 2) * 6);
-  CHECK_ANSWER((3 + 2) * (1 + 2));
-  CHECK_ANSWER((3 + 2) * 7 + 5);
-  CHECK_ANSWER(5 * (3 + 2) * 7);
-  CHECK_ANSWER(5 * (3 + 2 * 12) * 7);
-  CHECK_ANSWER((3 + (1 / 10) + 2));
+  return std::make_tuple(terminals, spec, std::move(gen));
 }
+
+tiny_bnf::Expected<float> eval(std::string input,
+                     const std::tuple<tiny_bnf::Terminals, tiny_bnf::Specification, tiny_bnf::Generator>& parser) {
+  auto& [terminals, spec, gen] = parser;
+
+  auto tokens = tiny_bnf::tokenize(terminals, input);
+  if (!tokens)
+    return tiny_bnf::Error<>("Failed to tokenize: " + tokens.error());
+
+  auto tree = tiny_bnf::parse(spec, *tokens, tiny_bnf::ParserType::Earley);
+  // debugTree(*tree);
+
+  if (!tree)
+    return tiny_bnf::Error<>("Failed to parse: " + tree.error());
+
+  auto stmt = tiny_bnf::generate<Stmt>(gen, *tree);
+  if (!stmt)
+    return tiny_bnf::Error<>("Failed to generate: " + stmt.error());
+
+  return stmt->eval();
+};

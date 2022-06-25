@@ -8,4 +8,7 @@ add_compile_options(-Wall -Wextra -pedantic)
 # add_compile_options(-Wall -Wextra -pedantic -fsanitize=address)
 # add_link_options(-fsanitize=address)
 
-add_executable(example example.cpp)
+include_directories(./include)
+
+add_executable(calc examples/calculator/calc.cpp)
+add_executable(calc_test examples/calculator/test.cpp)
