@@ -1,6 +1,7 @@
 #ifndef TINY_BNF_H
 #define TINY_BNF_H
 
+#include <iostream>
 #include <map>
 #include <memory>
 #include <numeric>
@@ -65,13 +66,53 @@ struct Expected {
   std::variant<T, Error<ErrorRepr>> value;
 };
 
+namespace detail {
+
+struct Or {};
+
+struct Optional {
+  std::string symbol;
+};
+
+struct Arbitrary {
+  std::string symbol;
+};
+
+};  // namespace detail
+constexpr detail::Or OR;
+
+struct Expr {
+  Expr() = default;
+  Expr(std::string symbol) : symbol(symbol), optional(false) {
+  }
+  Expr(detail::Optional opt) : symbol(opt.symbol), optional(true) {
+  }
+
+  Expr(detail::Arbitrary arb) : symbol(arb.symbol), arbitrary(true) {
+  }
+
+  std::string symbol;
+  bool optional = false;
+  bool arbitrary = false;
+};
+
 struct Rule {
   std::string symbol;
-  std::vector<std::string> expr;
+  std::vector<Expr> expr;
 };
-  
+
+bool operator<(const Expr &l, const Expr &r) {
+  return l.symbol < r.symbol;
+}
 bool operator<(const Rule &l, const Rule &r) {
   return l.symbol == r.symbol ? l.expr < r.expr : l.symbol < r.symbol;
+}
+
+auto opt(std::string symbol) {
+  return detail::Optional{symbol};
+}
+auto arb(std::string symbol) {
+  return detail::Arbitrary{symbol};
 }
 
 struct Specification {
@@ -79,28 +120,66 @@ struct Specification {
     rules.push_back(Rule{std::move(symbol), {}});
     return *this;
   }
-  Specification &operator<=(std::string symbol){
-    rules.back().expr.push_back(std::move(symbol));
+  Specification &operator>=(std::string symbol) {
+    exprAdd(symbol);
     return *this;
   }
   Specification &operator,(std::string symbol) {
-    rules.back().expr.push_back(std::move(symbol));
+    exprAdd(symbol);
     return *this;
   }
   Specification &operator|(std::string symbol) {
     cloneLast();
-    rules.back().expr.push_back(std::move(symbol));
+    exprAdd(symbol);
     return *this;
   }
-  
+
+  Specification &operator>=(detail::Optional symbol) {
+    exprAdd(symbol);
+    return *this;
+  }
+  Specification &operator,(detail::Optional symbol) {
+    exprAdd(symbol);
+    return *this;
+  }
+  Specification &operator|(detail::Optional symbol) {
+    cloneLast();
+    exprAdd(symbol);
+    return *this;
+  }
+
+  Specification &operator>=(detail::Arbitrary symbol) {
+    exprAdd(symbol);
+    return *this;
+  }
+  Specification &operator,(detail::Arbitrary symbol) {
+    exprAdd(symbol);
+    return *this;
+  }
+  Specification &operator|(detail::Arbitrary symbol) {
+    cloneLast();
+    exprAdd(symbol);
+    return *this;
+  }
+
+  template <typename T>
+  void exprAdd(T symbol) {
+    rules.back().expr.push_back(Expr(std::move(symbol)));
+  }
+
+  Specification &operator,(detail::Or) {
+    cloneLast();
+    return *this;
+  }
+
   auto begin() const {
     return std::begin(rules);
   }
   auto end() const {
     return std::end(rules);
   }
-  
-  void cloneLast(){
+
+  void cloneLast() {
     rules.push_back(Rule{rules.back().symbol, {}});
   }
 
@@ -121,7 +200,7 @@ Terminals autoTerminals(const Specification &spec) {
 
   for (const auto &rule : spec)
     for (const auto &expr : rule.expr)
-      ts[expr] = true;
+      ts[expr.symbol] = true;
 
   for (const auto &rule : spec)
     ts[rule.symbol] = false;
@@ -146,12 +225,17 @@ auto accumulateN(It it, T n, U init, F f) {
   return init;
 }
 
-Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
+inline bool isWordConstituent(char c) {
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '-';
+}
+
+Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input, bool delimit = false) {
   Tokens tokens;
   const auto &map = terminals.expr_to_sym;
 
   auto n = accumulateN(size_t{1}, std::size(input), size_t{0}, [&](auto a, auto b) {
-    if (auto it = map.find(input.substr(a, b - a)); it != std::end(map)) {
+    bool cond = !delimit || b == size(input) || !isWordConstituent(input[b]) || !isWordConstituent(input[a]);
+    if (auto it = map.find(input.substr(a, b - a)); cond && it != std::end(map)) {
       if (it->second != "")
         tokens.push_back(it->second);
       return b;
@@ -159,7 +243,7 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input) {
     return a;
   });
 
-  if (n == std::size(input))
+  if (n >= std::size(input))
     return tokens;
   else
     return Error<>("Unused string: " + (std::string)input.substr(n));
@@ -180,55 +264,72 @@ Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
   auto match = [&](const auto &state, const auto &c) {
     if (isComplete(state))
       return false;
-    return state.rule.expr[state.p] == c;
+    return state.rule.expr[state.p].symbol == c;
   };
 
   for (size_t k = 0; k <= size(tokens); ++k) {
-    // scanning
-    if (k != 0) {
-      for (auto s : stateSets[k - 1])
-        if (match(s, tokens[k - 1])) {
-          s.p += 1;
-          s.node.children.push_back(Node{tokens[k - 1], {}});
-          stateSets[k].push_back(std::move(s));
-        }
-    }
+    std::set<Rule> predRules;
 
-    // completion
     for (size_t i = 0; i < size(stateSets[k]); ++i) {
-      const auto s = stateSets[k][i];
-      if (isComplete(s)) {
-        for (auto ss : stateSets[s.i])
-          if (match(ss, s.rule.symbol)) {
-            ss.p += 1;
-            ss.node.children.push_back(s.node);
-            stateSets[k].push_back(std::move(ss));
-          }
-      }
-    }
-
-    // prediction
-    std::set<Rule> record;
-    for (size_t i = 0; i < size(stateSets[k]); ++i) {
-      const auto s = stateSets[k][i];
+      auto s = stateSets[k][i];
       if (!isComplete(s)) {
-        for (auto rule : spec.rules) {
-          if (rule.symbol == s.rule.expr[s.p]) {
-            if (record.find(rule) == record.end()) {
-              record.insert(rule);
-              stateSets[k].push_back(State{k, 0, rule, Node{rule.symbol, {}}});
-            }
+        auto next = s.rule.expr[s.p];
+
+        // prediction
+        for (auto &rule : spec) {
+          if (rule.symbol == next.symbol && predRules.find(rule) == end(predRules)) {
+            stateSets[k].push_back(State{k, 0, rule, {rule.symbol, {}}});
+            predRules.insert(rule);
           }
         }
+
+        // scanning
+        if (tokens[k] == next.symbol) {
+          auto s2 = s;
+          s2.p += 1;
+          s2.node.children.push_back(Node{next.symbol, {}});
+          stateSets[k + 1].push_back(s2);
+        }
+
+        // TODO
+        if (next.optional || next.arbitrary) {
+          auto s2 = s;
+          s2.p += 1;
+          stateSets[k].push_back(s2);
+        }
+
+      } else {
+        // completion
+        auto sz = size(stateSets[s.i]);
+        for (size_t j = 0; j < sz; ++j)
+          if (match(stateSets[s.i][j], s.rule.symbol)) {
+            auto sc = stateSets[s.i][j];
+            if (!sc.rule.expr[sc.p].arbitrary)
+              sc.p += 1;
+            sc.node.children.push_back(s.node);
+            stateSets[k].push_back(sc);
+          }
       }
     }
   }
 
+  int npossibilities = 0;
   for (auto s : stateSets.back())
     if (s.node.symbol == spec.rules.front().symbol)
-      return s.node;
+      if (s.p == size(s.rule.expr))
+        ++npossibilities;
 
-  return Error<>("Failed to parse");
+  if (npossibilities == 0)
+    return Error<>("Unable to parse input");
+  else if (npossibilities > 1)
+    return Error<>("Ambiguous");
+
+  for (auto s : stateSets.back())
+    if (s.node.symbol == spec.rules.front().symbol)
+      if (s.p == size(s.rule.expr))
+        return s.node;
+
+  return Error<>("Unreachable path");
 }
 
 enum ParserType { Earley };
@@ -242,6 +343,13 @@ Expected<Node> parse(const Specification &spec, Tokens tokens, ParserType parser
 
 template <typename... Ts>
 struct Ctor {};
+
+struct UseString {};
+
+template <typename... Ts>
+struct CheckUseString : std::false_type {};
+template <>
+struct CheckUseString<UseString> : std::true_type {};
 
 template <int I, typename T, typename... Ts>
 struct NthType : NthType<I - 1, Ts...> {};
@@ -257,18 +365,31 @@ struct AnnotatedPtr {
 
 struct Generator {
   struct Concept {
+    Concept(bool useString) : useStringToConstruct(useString) {
+    }
+
     virtual ~Concept() = default;
     virtual std::optional<AnnotatedPtr> construct(std::vector<AnnotatedPtr> args) = 0;
+    virtual std::optional<AnnotatedPtr> construct(std::string expr) = 0;
     virtual void destruct(void *obj) const = 0;
+    bool useStringToConstruct = false;
   };
 
   template <typename T, typename... Ctors>
   struct Model : Concept {
+    using Concept::Concept;
+
     std::optional<AnnotatedPtr> construct(std::vector<AnnotatedPtr> args) override {
       if constexpr (sizeof...(Ctors) == 0)
         return AnnotatedPtr{new T(), typeid(T).hash_code()};
       else
         return match(args, Ctors{}...);
+    }
+    std::optional<AnnotatedPtr> construct(std::string expr) override {
+      if constexpr (CheckUseString<Ctors...>::value)
+        return new T(expr);
+      else
+        return std::nullopt;
     }
 
     void destruct(void *obj) const override {
@@ -293,7 +414,12 @@ struct Generator {
 
   template <typename T, typename... Ctors>
   void bind(std::string name, Ctors...) {
-    models[name] = std::make_unique<Model<T, Ctors...>>();
+    models[name] = std::make_unique<Model<T, Ctors...>>(false);
+  }
+
+  template <typename T>
+  void bind(std::string name, UseString) {
+    models[name] = std::make_unique<Model<T>>(true);
   }
 
   std::optional<Concept *> findModel(std::string symbol) const {
@@ -312,32 +438,37 @@ Expected<T> generate(const Generator &generator, const Node &node) {
   using R = Expected<std::pair<AnnotatedPtr, Generator::Concept *>>;
 
   auto build = [&](auto &build, Node node) -> R {
+    auto modelOpt = generator.findModel(node.symbol);
+    if (!modelOpt)
+      return Error<>("Cannot find model: " + node.symbol);
+    auto model = *modelOpt;
+
     std::vector<AnnotatedPtr> args;
     std::vector<Generator::Concept *> models;
 
-    for (auto child : node.children) {
-      if (auto ret = build(build, child)) {
-        auto [arg, model] = *ret;
-        args.push_back(arg);
-        models.push_back(model);
-      } else {
-        return ret;
+    if (!model->useStringToConstruct)
+      for (auto child : node.children) {
+        if (auto ret = build(build, child)) {
+          auto [arg, model] = *ret;
+          args.push_back(arg);
+          models.push_back(model);
+        } else {
+          return ret;
+        }
       }
-    }
 
     ScopeGuard guard{[&]() {
       for (size_t i = 0; i < std::size(args); ++i)
         models[i]->destruct(args[i].ptr);
     }};
 
-    if (auto model = generator.findModel(node.symbol)) {
-      if (auto ptr = (*model)->construct(args))
-        return std::pair{*ptr, *model};
-      else
-        return Error<>("Cannot construct type: " + node.symbol);
-    } else {
-      return Error<>("Cannot find symbol: " + node.symbol);
-    }
+    if (model->useStringToConstruct && size(node.children) != 1)
+      return Error<>("Model binded with _UseString_ tag requires one child in corresponding node");
+
+    if (auto ptr = !model->useStringToConstruct ? model->construct(args) : model->construct(node.children[0].symbol))
+      return std::pair{*ptr, model};
+    else
+      return Error<>("Cannot construct type: " + node.symbol);
   };
 
   if (auto ret = build(build, node)) {

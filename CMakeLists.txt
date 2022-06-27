@@ -12,3 +12,5 @@ include_directories(./include)
 
 add_executable(calc examples/calculator/calc.cpp)
 add_executable(calc_test examples/calculator/test.cpp)
+
+add_executable(lang examples/lang/parser.cpp)

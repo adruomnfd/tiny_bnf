@@ -172,24 +172,24 @@ void debugTree(tiny_bnf::Node node, int depth = 0) {
 auto buildParser() {
   tiny_bnf::Specification spec;
 
-  spec["stmt"] <= "expr";
+  spec["stmt"] >= "expr";
 
-  spec["expr"] <= "term", "+", "expr";
-  spec["expr"] <= "term", "-", "expr";
-  spec["expr"] <= "term";
+  spec["expr"] >= "term", "+", "expr";
+  spec["expr"] >= "term", "-", "expr";
+  spec["expr"] >= "term";
 
-  spec["term"] <= "factor", "*", "term";
-  spec["term"] <= "factor", "/", "term";
-  spec["term"] <= "factor";
+  spec["term"] >= "factor", "*", "term";
+  spec["term"] >= "factor", "/", "term";
+  spec["term"] >= "factor";
 
-  spec["factor"] <= "(", "expr", ")";
-  spec["factor"] <= "number";
+  spec["factor"] >= "(", "expr", ")";
+  spec["factor"] >= "number";
 
-  spec["number"] <= "integer" | "integer", ".", "integer";
+  spec["number"] >= "integer" | "integer", ".", "integer";
 
-  spec["integer"] <= "digit" | "integer", "digit";
+  spec["integer"] >= "digit" | "integer", "digit";
 
-  spec["digit"] <= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
+  spec["digit"] >= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 
   //
   tiny_bnf::Terminals terminals = autoTerminals(spec);
