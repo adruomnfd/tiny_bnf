@@ -241,9 +241,9 @@ tiny_bnf::Expected<float> eval(std::string input,
   if (!tree)
     return tiny_bnf::Error<>("Failed to parse: " + tree.error());
 
-  auto stmt = tiny_bnf::generate<Stmt>(gen, *tree);
+  auto stmt = tiny_bnf::generate<Stmt>(gen, (*tree)[0]);
   if (!stmt)
     return tiny_bnf::Error<>("Failed to generate: " + stmt.error());
 
   return stmt->eval();
-};
+}

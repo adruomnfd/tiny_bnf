@@ -1,0 +1,39 @@
+Sentence >= IP-MAT PU?
+
+IP-MAT >= SBJ VB~L PRD2
+IP-MAT >= SBJ VB~I
+IP-MAT >= SBJ VB~T OB1
+IP-MAT >= SBJ VB~C OB1 PRD
+IP-MAT >= SBJ VB~D OB2 OB1
+
+VB~Ln >= VB
+VB~La >= VB
+VB~I >= VB 
+VB~T >= VB 
+VB~C >= VB
+VB~D >= VB 
+
+SBJ >= NP
+OB1 >= NP
+OB2 >= NP
+PRD >= NP | ADJP
+PRD2 >= NP | ADJP
+
+NP >= D? ADJP* N
+ADJP >= ADVP? ADJ
+ADVP >= ADVP? ADV
+PP >= P-ROLE NP
+AP == ADVP | PP
+
+P-ROLE >= P
+D >= a | an | the
+PU >= . | ! | ?
+
+import N noun.txt
+import VB verb.txt intermediate
+import ADJ adj.txt
+import ADV adv.txt
+import P p.txt
+
+autoTerminals
+ignoreSpace

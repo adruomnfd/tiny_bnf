@@ -1,12 +1,15 @@
 #ifndef TINY_BNF_H
 #define TINY_BNF_H
 
+#include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <numeric>
 #include <optional>
 #include <set>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -78,7 +81,8 @@ struct Arbitrary {
   std::string symbol;
 };
 
-};  // namespace detail
+}  // namespace detail
+
 constexpr detail::Or OR;
 
 struct Expr {
@@ -99,13 +103,14 @@ struct Expr {
 struct Rule {
   std::string symbol;
   std::vector<Expr> expr;
+  bool intermediate = false;
 };
 
-bool operator<(const Expr &l, const Expr &r) {
+bool operator==(const Expr &l, const Expr &r) {
   return l.symbol < r.symbol;
 }
-bool operator<(const Rule &l, const Rule &r) {
-  return l.symbol == r.symbol ? l.expr < r.expr : l.symbol < r.symbol;
+bool operator==(const Rule &l, const Rule &r) {
+  return l.symbol == r.symbol && l.expr == r.expr;
 }
 
 auto opt(std::string symbol) {
@@ -120,6 +125,23 @@ struct Specification {
     rules.push_back(Rule{std::move(symbol), {}});
     return *this;
   }
+
+  Specification &operator==(std::string symbol) {
+    rules.back().intermediate = true;
+    exprAdd(symbol);
+    return *this;
+  }
+  Specification &operator==(detail::Optional symbol) {
+    rules.back().intermediate = true;
+    exprAdd(symbol);
+    return *this;
+  }
+  Specification &operator==(detail::Arbitrary symbol) {
+    rules.back().intermediate = true;
+    exprAdd(symbol);
+    return *this;
+  }
+
   Specification &operator>=(std::string symbol) {
     exprAdd(symbol);
     return *this;
@@ -172,6 +194,10 @@ struct Specification {
     return *this;
   }
 
+  void setIntermediate() {
+    rules.back().intermediate = true;
+  }
+
   auto begin() const {
     return std::begin(rules);
   }
@@ -180,7 +206,7 @@ struct Specification {
   }
 
   void cloneLast() {
-    rules.push_back(Rule{rules.back().symbol, {}});
+    rules.push_back(Rule{rules.back().symbol, {}, rules.back().intermediate});
   }
 
   std::vector<Rule> rules;
@@ -249,7 +275,7 @@ Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input, bo
     return Error<>("Unused string: " + (std::string)input.substr(n));
 }
 
-Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
+Expected<std::vector<Node>> parseEarley(const Specification &spec, Tokens tokens) {
   struct State {
     size_t i = 0;
     size_t p = 0;
@@ -268,7 +294,7 @@ Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
   };
 
   for (size_t k = 0; k <= size(tokens); ++k) {
-    std::set<Rule> predRules;
+    std::set<size_t> predRules;
 
     for (size_t i = 0; i < size(stateSets[k]); ++i) {
       auto s = stateSets[k][i];
@@ -276,15 +302,18 @@ Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
         auto next = s.rule.expr[s.p];
 
         // prediction
+        size_t ct = 0, fc = 0;
         for (auto &rule : spec) {
-          if (rule.symbol == next.symbol && predRules.find(rule) == end(predRules)) {
+          if (rule.symbol == next.symbol && predRules.find(ct) == end(predRules)) {
             stateSets[k].push_back(State{k, 0, rule, {rule.symbol, {}}});
-            predRules.insert(rule);
+            predRules.insert(ct);
+            ++fc;
           }
+          ++ct;
         }
 
         // scanning
-        if (tokens[k] == next.symbol) {
+        if (fc == 0 && tokens[k] == next.symbol) {
           auto s2 = s;
           s2.p += 1;
           s2.node.children.push_back(Node{next.symbol, {}});
@@ -306,7 +335,14 @@ Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
             auto sc = stateSets[s.i][j];
             if (!sc.rule.expr[sc.p].arbitrary)
               sc.p += 1;
-            sc.node.children.push_back(s.node);
+
+            if (s.rule.intermediate) {
+              for (auto n : s.node.children)
+                sc.node.children.push_back(n);
+            } else {
+              sc.node.children.push_back(s.node);
+            }
+
             stateSets[k].push_back(sc);
           }
       }
@@ -321,20 +357,20 @@ Expected<Node> parseEarley(const Specification &spec, Tokens tokens) {
 
   if (npossibilities == 0)
     return Error<>("Unable to parse input");
-  else if (npossibilities > 1)
-    return Error<>("Ambiguous");
+
+  std::vector<Node> nodes;
 
   for (auto s : stateSets.back())
     if (s.node.symbol == spec.rules.front().symbol)
       if (s.p == size(s.rule.expr))
-        return s.node;
+        nodes.push_back(s.node);
 
-  return Error<>("Unreachable path");
+  return nodes;
 }
 
 enum ParserType { Earley };
 
-Expected<Node> parse(const Specification &spec, Tokens tokens, ParserType parserType = ParserType::Earley) {
+Expected<std::vector<Node>> parse(const Specification &spec, Tokens tokens, ParserType parserType = ParserType::Earley) {
   switch (parserType) {
     case ParserType::Earley: return parseEarley(spec, std::move(tokens));
     default: return Error<>("Invalid parser type");
@@ -479,6 +515,84 @@ Expected<T> generate(const Generator &generator, const Node &node) {
   } else {
     return Error<>(ret.error());
   }
+}
+
+// Utilities
+std::string readFile(std::string filename) {
+  std::ifstream file(filename);
+  std::stringstream ss;
+  if (!file.is_open())
+    std::cout << "cannot open: " << filename << '\n';
+  ss << file.rdbuf();
+  return ss.str();
+}
+
+template <typename F>
+void forEachLine(std::string lines, F f) {
+  std::istringstream ss(lines);
+  std::string line;
+  while (std::getline(ss, line)) {
+    if (size(line))
+      f(line);
+  }
+}
+
+void importSpec(Specification &spec, std::string sym, std::string lines) {
+  forEachLine(lines, [&](auto line) { spec[sym] >= line; });
+}
+
+auto parseSpec(std::string filename) {
+  auto dir = filename.substr(0, filename.find_last_of('/')) + '/';
+
+  Specification spec;
+  Terminals terminals;
+  forEachLine(readFile(filename), [&](std::string line) {
+    if (line == "autoTerminals") {
+      terminals = autoTerminals(spec);
+    } else if (line == "ignoreSpace") {
+      terminals[" "] = "";
+    } else if (line.substr(0, 6) == "import") {
+      std::vector<std::string> parts;
+      std::stringstream ss(line);
+      std::string part;
+      while (ss >> part)
+        parts.push_back(part);
+      if (size(parts) == 3)
+        importSpec(spec, parts[1], readFile(dir + parts[2]));
+      else if (size(parts) == 4) {
+        importSpec(spec, parts[1], readFile(dir + parts[2]));
+        spec.setIntermediate();
+      } else
+        std::cout << "import error\n";
+    } else {
+      std::vector<std::string> parts;
+      std::stringstream ss(line);
+      std::string part;
+      while (ss >> part)
+        parts.push_back(part);
+      if (size(parts) < 3)
+        std::cout << "rule error\n";
+      spec[parts[0]];
+      if (parts[1] == ">=" || parts[1] == "==") {
+        for (size_t i = 2; i < size(parts); i++) {
+          if (parts[i].size() > 1 && parts[i].back() == '*')
+            spec >= arb(parts[i].substr(0, size(parts[i]) - 1));
+          else if (parts[i].size() > 1 && parts[i].back() == '?')
+            spec >= opt(parts[i].substr(0, size(parts[i]) - 1));
+          else if (parts[i] == "|")
+            spec.cloneLast();
+          else
+            spec >= parts[i];
+        }
+        if (parts[1] == "==")
+          spec.setIntermediate();
+      } else {
+        std::cout << "part[1] error\n";
+      }
+    }
+  });
+
+  return std::make_tuple(spec, terminals);
 }
 
 }  // namespace tiny_bnf
