@@ -1,39 +1,30 @@
 Sentence >= IP-MAT PU?
 
-IP-MAT >= SBJ VB~L PRD2
-IP-MAT >= SBJ VB~I
-IP-MAT >= SBJ VB~T OB1
-IP-MAT >= SBJ VB~C OB1 PRD
-IP-MAT >= SBJ VB~D OB2 OB1
+IP-MAT >= NP-SBJ V~Ln NP-PRD2
+IP-MAT >= NP-SBJ V~La ADJP-PRD2
+IP-MAT >= NP-SBJ V~I
+IP-MAT >= NP-SBJ V~Tn
+IP-MAT >= NP-SBJ V~Cn.a NP-OB1 ADJP-PRD
+IP-MAT >= NP-SBJ V~Dn.n NP-OB2 NP-OB1
 
-VB~Ln >= VB
-VB~La >= VB
-VB~I >= VB 
-VB~T >= VB 
-VB~C >= VB
-VB~D >= VB 
+V~Ln   == VBP~Ln | VBD~Ln
+V~La   == VBP~La | VBD~La
+V~I   == VBP~I | VBD~I
+V~Tn   == VBP~Tn | VBD~Tn
+V~Cn.a == VBP~Cn.a | VBD~Cn.a
+V~Dn.n == VBP~Dn.n | VBD~Dn.n
 
-SBJ >= NP
-OB1 >= NP
-OB2 >= NP
-PRD >= NP | ADJP
-PRD2 >= NP | ADJP
+NP-SBJ  >= NP
+NP-OB1  >= NP
+NP-OB2  >= NP
+NP-PRD2 >= NP
 
-NP >= D? ADJP* N
-ADJP >= ADVP? ADJ
-ADVP >= ADVP? ADV
-PP >= P-ROLE NP
-AP == ADVP | PP
+ADJP-PRD2 >= ADJP
+ADJP-PRD  >= ADJP
 
-P-ROLE >= P
-D >= a | an | the
-PU >= . | ! | ?
+NP   >= D? ADJP* (N | PRO)
+ADJP >= ADJ
 
-import N noun.txt
-import VB verb.txt intermediate
-import ADJ adj.txt
-import ADV adv.txt
-import P p.txt
+D >= a
 
-autoTerminals
-ignoreSpace
+PU == .

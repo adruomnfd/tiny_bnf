@@ -18,4 +18,4 @@ jobs:
     - name: build
       run: cmake --build build
     - name: test
-      run: build/example
+      run: build/calc_test

@@ -1,6 +1,12 @@
-box
-ground
-morning
+#PRO
 I
-book
 you
+he
+she
+it
+me
+him
+her
+
+#N
+book
