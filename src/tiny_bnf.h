@@ -84,6 +84,11 @@ struct OneOrMore {
   std::string symbol;
 };
 
+template <typename T>
+struct Deref {
+  T ref;
+};
+
 }  // namespace detail
 
 constexpr detail::Or OR;
@@ -99,11 +104,16 @@ struct Expr {
   }
   Expr(detail::OneOrMore oom) : symbol(oom.symbol), oneOrMore(true) {
   }
+  template <typename T>
+  Expr(detail::Deref<T> deref) : Expr(deref.ref) {
+    deref = true;
+  }
 
   std::string symbol;
   bool optional = false;
   bool arbitrary = false;
   bool oneOrMore = false;
+  bool deref = false;
 };
 
 struct Rule {
@@ -121,6 +131,10 @@ inline auto arb(std::string symbol) {
 }
 inline auto oom(std::string symbol) {
   return detail::OneOrMore{symbol};
+}
+template <typename T>
+inline auto deref(T x) {
+  return detail::Deref{x};
 }
 
 struct Specification {
@@ -142,10 +156,6 @@ struct Specification {
     setIntermediate();
     return addExpr(symbol);
   }
-  auto operator&=(std::string symbol) -> Specification & {
-    setAlias();
-    return addExpr(symbol);
-  }
 
   auto operator>=(detail::Optional symbol) -> Specification & {
     return addExpr(symbol);
@@ -159,10 +169,6 @@ struct Specification {
   }
   auto operator==(detail::Optional symbol) -> Specification & {
     setIntermediate();
-    return addExpr(symbol);
-  }
-  auto operator&=(detail::Optional symbol) -> Specification & {
-    setAlias();
     return addExpr(symbol);
   }
 
@@ -180,10 +186,6 @@ struct Specification {
     setIntermediate();
     return addExpr(symbol);
   }
-  auto operator&=(detail::Arbitrary symbol) -> Specification & {
-    setAlias();
-    return addExpr(symbol);
-  }
 
   auto operator>=(detail::OneOrMore symbol) -> Specification & {
     return addExpr(symbol);
@@ -199,8 +201,23 @@ struct Specification {
     setIntermediate();
     return addExpr(symbol);
   }
-  auto operator&=(detail::OneOrMore symbol) -> Specification & {
-    setAlias();
+
+  template <typename T>
+  auto operator>=(detail::Deref<T> symbol) -> Specification & {
+    return addExpr(symbol);
+  }
+  template <typename T>
+  auto operator,(detail::Deref<T> symbol) -> Specification & {
+    return addExpr(symbol);
+  }
+  template <typename T>
+  auto operator|(detail::Deref<T> symbol) -> Specification & {
+    addAlternative();
+    return addExpr(symbol);
+  }
+  template <typename T>
+  auto operator==(detail::Deref<T> symbol) -> Specification & {
+    setIntermediate();
     return addExpr(symbol);
   }
 
@@ -285,6 +302,10 @@ struct Node {
   std::string symbol;
   std::vector<Node> children;
 };
+
+inline bool operator==(const Node& a, const Node& b){
+  return a.symbol == b.symbol && a.children == b.children;
+}
 
 Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input, bool delimit = false);
 

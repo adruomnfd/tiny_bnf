@@ -1,2 +1,5 @@
-extremely
-very
+#ADV
+
+#ADVR
+
+#ADVS

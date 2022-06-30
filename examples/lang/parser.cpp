@@ -72,17 +72,19 @@ auto split(std::string line) {
 std::string dir = "examples/lang/";
 
 void importWords(bnf::Specification& spec) {
-  std::string type;
-  bnf::forEachLine(readFile(dir + "noun.txt"), [&](auto w) {
-    if (w[0] == '#')
-      type = w.substr(1);
-    else
-      spec[type] >= w;
-  });
+  auto import = [&](auto filename) {
+    std::string type;
+    bnf::forEachLine(readFile(dir + filename), [&](auto w) {
+      if (w[0] == '#')
+        type = w.substr(1);
+      else
+        spec[type] >= w;
+    });
+  };
 
-  bnf::forEachLine(readFile(dir + "adj.txt"), [&](auto w) { spec["ADJ"] >= w; });
-
-  bnf::forEachLine(readFile(dir + "adv.txt"), [&](auto w) { spec["ADV"] >= w; });
+  import("noun.txt");
+  import("adj.txt");
+  import("adv.txt");
 
   bnf::forEachLine(readFile(dir + "verb.txt"), [&](auto w) {
     auto words = split(w.substr(0, w.find('/')));

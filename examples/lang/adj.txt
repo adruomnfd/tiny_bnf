@@ -1,2 +1,5 @@
-boring
-blue
+#ADJ
+
+#ADJR
+
+#ADJS

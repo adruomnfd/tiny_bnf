@@ -1,5 +1,6 @@
 #include <tiny_bnf.h>
 
+#include <algorithm>
 #include <iostream>
 #include <set>
 
@@ -110,19 +111,15 @@ auto complete(StateSets &stateSets, size_t k, State s) {
         sc.rule.expr[sc.p].arbitrary = true;
       }
 
+      if (s.rule.intermediate || sc.rule.alias || sc.rule.expr[sc.p].deref) {
+        for (auto n : s.node.children)
+          sc.node.children.push_back(n);
+      } else {
+        sc.node.children.push_back(s.node);
+      }
+
       if (!sc.rule.expr[sc.p].arbitrary)
         sc.p += 1;
-
-      if (sc.rule.alias) {
-        sc.node.children = s.node.children;
-      } else {
-        if (s.rule.intermediate) {
-          for (auto n : s.node.children)
-            sc.node.children.push_back(n);
-        } else {
-          sc.node.children.push_back(s.node);
-        }
-      }
 
       stateSets[k].push_back(sc);
     }
@@ -138,7 +135,7 @@ auto parseEarley(const Specification &spec, Tokens tokens) -> Expected<std::vect
     for (size_t i = 0; i < size(stateSets[k]); ++i) {
       auto s = stateSets[k][i];
       if (!isComplete(s)) {
-        if(k == size(tokens))
+        if (k == size(tokens))
           continue;
         auto next = s.rule.expr[s.p];
 
@@ -162,11 +159,12 @@ auto parseEarley(const Specification &spec, Tokens tokens) -> Expected<std::vect
       }
     }
   }
+
   std::vector<Node> nodes;
 
   for (auto s : stateSets.back())
     if (s.node.symbol == spec.rules.front().symbol)
-      if (s.p == size(s.rule.expr))
+      if (s.p == size(s.rule.expr) && std::find(begin(nodes), end(nodes), s.node) == end(nodes))
         nodes.push_back(s.node);
 
   if (size(nodes) == 0)
@@ -248,6 +246,10 @@ auto splitBySpaceAndParenthesis(std::string_view text) {
       parts.push_back("*");
     else if (text[i] == '+')
       parts.push_back("+");
+    else if (text[i] == '&')
+      parts.push_back("&");
+    else if (text[i] == ':')
+      parts.push_back(":");
     else if (text[i] == '|')
       parts.push_back("|");
     else if (text[i] == ' ')
@@ -270,21 +272,19 @@ auto parseSpec(std::string text) -> Specification {
   Specification spec;
 
   forEachLine(text, [&](std::string line) {
-    if(line[0] == '#')
+    if (line[0] == '#')
       return;
     auto parts = splitBySpaceAndParenthesis(line);
 
-    if (size(parts) < 3 || (parts[1] != ">=" && parts[1] != "==" && parts[1] != "&=")) {
+    if (size(parts) < 3 || (parts[1] != ">=" && parts[1] != "==")) {
       std::cout << "invalid line: " << line << '\n';
       return;
     }
 
     spec.addSymbol(parts[0]);
-    if (parts[1] == ">=" || parts[1] == "==" || parts[1] == "&=") {
+    if (parts[1] == ">=" || parts[1] == "==") {
       if (parts[1] == "==")
         spec.setIntermediate();
-      if (parts[1] == "&=")
-        spec.setAlias();
 
       for (size_t i = 2; i < size(parts); ++i) {
         if (parts[i] == "|")
@@ -303,6 +303,9 @@ auto parseSpec(std::string text) -> Specification {
           ++i;
         } else if (i + 1 < size(parts) && parts[i + 1] == "+") {
           spec.activeRule().expr.back().oneOrMore = true;
+          ++i;
+        } else if (i + 1 < size(parts) && parts[i + 1] == "&") {
+          spec.activeRule().expr.back().deref = true;
           ++i;
         }
       }
