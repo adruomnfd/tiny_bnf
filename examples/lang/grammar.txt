@@ -1,27 +1,59 @@
 Sentence >= IP-MAT PU?
 
+# =====CLAUSES=====
 IP-MAT >= NP-SBJ V~Ln NP-PRD2
 IP-MAT >= NP-SBJ V~La ADJP-PRD2
 IP-MAT >= NP-SBJ V~I
-IP-MAT >= NP-SBJ V~Tn
+IP-MAT >= NP-SBJ V~Tn NP-OB1
 IP-MAT >= NP-SBJ V~Cn.a NP-OB1 ADJP-PRD
 IP-MAT >= NP-SBJ V~Dn.n NP-OB2 NP-OB1
+IP-MAT >= NP-SBJ V~cat_Ve IP-PPL-CAT~Ve
+IP-MAT >= NP-SBJ V~cat_Vg IP-PPL-CAT~Vg
 
-V~Ln   == VBP~Ln | VBD~Ln
-V~La   == VBP~La | VBD~La
-V~I   == VBP~I | VBD~I
-V~Tn   == VBP~Tn | VBD~Tn
-V~Cn.a == VBP~Cn.a | VBD~Cn.a
-V~Dn.n == VBP~Dn.n | VBD~Dn.n
+IP-PPL~Vg >= VAG~Ln NP-PRD2 
+IP-PPL~Vg >= VAG~La ADJP-PRD2 
+IP-PPL~Vg >= VAG~I 
+IP-PPL~Vg >= VAG~Tn NP-OB1 
+IP-PPL~Vg >= VAG~Cn.a NP-OB1 ADJP-PRD 
+IP-PPL~Vg >= VAG~Dn.n NP-OB2 NP-OB1
 
-NP-SBJ  >= NP
-NP-OB1  >= NP
-NP-OB2  >= NP
-NP-PRD2 >= NP
+IP-PPL~Ve >= VVN~Ln NP-PRD2 
+IP-PPL~Vg >= VVN~La ADJP-PRD2  
+IP-PPL~Ve >= VVN~I
+IP-PPL~Ve >= VVN~Tn NP-OB1
+IP-PPL~Ve >= VVN~Cn.a NP-OB1 ADJP-PRD 
+IP-PPL~Ve >= VVN~Dn.n NP-OB2 NP-OB1
 
-ADJP-PRD2 >= ADJP
-ADJP-PRD  >= ADJP
+IP-INF >= VB~Ln NP-PRD2 
+IP-INF >= VB~La ADJP-PRD2 
+IP-INF >= VB~I 
+IP-INF >= VB~Tn NP-OB1 
+IP-INF >= VB~Cn.a NP-OB1 ADJP-PRD 
+IP-INF >= VB~Dn.n NP-OB2 NP-OB1
 
+V~Ln     == VBP~Ln | VBD~Ln
+V~La     == VBP~La | VBD~La
+V~I      == VBP~I | VBD~I
+V~Tn     == VBP~Tn | VBD~Tn
+V~Cn.a   == VBP~Cn.a | VBD~Cn.a
+V~Dn.n   == VBP~Dn.n | VBD~Dn.n
+V~cat_Ve == VBP~cat_Ve | VBD~cat_Ve
+V~cat_Vg == VBP~cat_Vg | VBD~cat_Vg
+
+IP-PPL-CAT~Vg &= IP-PPL~Vg
+IP-PPL-CAT~Ve &= IP-PPL~Ve
+
+
+# =====CLAUSE CONSTITUENTS=====
+NP-SBJ  &= NP
+NP-OB1  &= NP
+NP-OB2  &= NP
+NP-PRD2 &= NP
+ADJP-PRD2 &= ADJP
+ADJP-PRD  &= ADJP
+
+
+# =====PHRASES=====
 NP   >= D? ADJP* (N | PRO)
 ADJP >= ADVP? ADJ
 ADVP >= ADVP? ADV

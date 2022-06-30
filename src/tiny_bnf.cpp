@@ -270,6 +270,8 @@ auto parseSpec(std::string text) -> Specification {
   Specification spec;
 
   forEachLine(text, [&](std::string line) {
+    if(line[0] == '#')
+      return;
     auto parts = splitBySpaceAndParenthesis(line);
 
     if (size(parts) < 3 || (parts[1] != ">=" && parts[1] != "==" && parts[1] != "&=")) {

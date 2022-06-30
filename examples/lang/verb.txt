@@ -1,4 +1,5 @@
-be am is are was were been being / Ln La
-have has had had having / Tn
+be am is are was were been being / Ln La cat_Ve cat_Vg
+have has had had having / Tn cat_Ve
 break breaks broke broken breaking / Tn
 find finds found found finding / Tn Dn.n Cn.a
+code codes coded coded coding / I
