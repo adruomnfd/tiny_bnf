@@ -227,8 +227,8 @@ auto buildParser() {
   return std::make_tuple(terminals, spec, std::move(gen));
 }
 
-tiny_bnf::Expected<float> eval(std::string input,
-                     const std::tuple<tiny_bnf::Terminals, tiny_bnf::Specification, tiny_bnf::Generator>& parser) {
+tiny_bnf::Expected<float> eval(
+    std::string input, const std::tuple<tiny_bnf::Terminals, tiny_bnf::Specification, tiny_bnf::Generator>& parser) {
   auto& [terminals, spec, gen] = parser;
 
   auto tokens = tiny_bnf::tokenize(terminals, input);

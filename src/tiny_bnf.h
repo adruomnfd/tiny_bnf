@@ -91,7 +91,7 @@ constexpr detail::Leftparenthesis L;
 constexpr detail::RightParenthesis R;
 
 struct Expr {
-  Expr(std::string symbol) : symbol(symbol), optional(false) {
+  Expr(std::string symbol) : symbol(symbol) {
   }
   Expr(detail::Optional opt) : symbol(opt.symbol), optional(true) {
   }
@@ -186,19 +186,18 @@ struct Specification {
   }
 
   auto operator>=(detail::OneOrMore symbol) -> Specification & {
-    return addExpr(symbol.symbol);
-    return addExpr(arb(symbol.symbol));
+    return addExpr(symbol);
   }
   auto operator,(detail::OneOrMore symbol) -> Specification & {
-    return addExpr(symbol.symbol);
+    return addExpr(symbol);
   }
   auto operator|(detail::OneOrMore symbol) -> Specification & {
     addAlternative();
-    return addExpr(symbol.symbol);
+    return addExpr(symbol);
   }
   auto operator==(detail::OneOrMore symbol) -> Specification & {
     setIntermediate();
-    return addExpr(symbol.symbol);
+    return addExpr(symbol);
   }
   auto operator&=(detail::OneOrMore symbol) -> Specification & {
     setAlias();

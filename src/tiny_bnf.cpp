@@ -54,30 +54,83 @@ auto tokenize(const Terminals &terminals, std::string_view input, bool delimit) 
     return Error<>("Unable to tokenize: " + (std::string)input.substr(n));
 }
 
-template<typename F>
-void traverseNode(Node n, F f){
+template <typename F>
+void traverseNode(Node n, F f) {
   f(n.symbol);
-  for(auto& r: n.children)
-  traverseNode(r, f);
+  for (auto &r : n.children)
+    traverseNode(r, f);
+}
+struct State {
+  size_t i = 0;
+  size_t p = 0;
+  Rule rule;
+  Node node;
+};
+using StateSets = std::vector<std::vector<State>>;
+
+auto isComplete(const State &state) {
+  return state.p == size(state.rule.expr);
+}
+
+auto match(const State &state, const std::string &c) {
+  if (isComplete(state))
+    return false;
+  return state.rule.expr[state.p].symbol == c;
+}
+
+auto predict(StateSets &stateSets, size_t k, Expr next, const Specification &spec, std::set<size_t> &predRules) {
+  size_t ct = 0, fc = 0;
+  for (auto &rule : spec) {
+    if (rule.symbol == next.symbol && predRules.find(ct) == end(predRules)) {
+      stateSets[k].push_back(State{k, 0, rule, {rule.symbol, {}}});
+      predRules.insert(ct);
+      ++fc;
+    }
+    ++ct;
+  }
+  return fc != 0;
+}
+
+auto scan(StateSets &stateSets, size_t k, Expr next, State s) {
+  auto s2 = s;
+  if (!s2.rule.expr[s2.p].arbitrary)
+    s2.p += 1;
+  s2.node.children.push_back(Node{next.symbol, {}});
+  stateSets[k + 1].push_back(s2);
+}
+
+auto complete(StateSets &stateSets, size_t k, State s) {
+  auto sz = size(stateSets[s.i]);
+  for (size_t j = 0; j < sz; ++j)
+    if (match(stateSets[s.i][j], s.rule.symbol)) {
+      auto sc = stateSets[s.i][j];
+
+      if (sc.rule.expr[sc.p].oneOrMore) {
+        sc.rule.expr[sc.p].oneOrMore = false;
+        sc.rule.expr[sc.p].arbitrary = true;
+      }
+
+      if (!sc.rule.expr[sc.p].arbitrary)
+        sc.p += 1;
+
+      if (sc.rule.alias) {
+        sc.node.children = s.node.children;
+      } else {
+        if (s.rule.intermediate) {
+          for (auto n : s.node.children)
+            sc.node.children.push_back(n);
+        } else {
+          sc.node.children.push_back(s.node);
+        }
+      }
+
+      stateSets[k].push_back(sc);
+    }
 }
 
 auto parseEarley(const Specification &spec, Tokens tokens) -> Expected<std::vector<Node>> {
-  struct State {
-    size_t i = 0;
-    size_t p = 0;
-    Rule rule;
-    Node node;
-  };
-
-  auto stateSets = std::vector<std::vector<State>>(size(tokens) + 1);
+  auto stateSets = StateSets(size(tokens) + 1);
   stateSets[0].push_back(State{0, 0, spec.rules.front(), Node{spec.rules.front().symbol, {}}});
-
-  auto isComplete = [&](const auto &state) { return state.p == size(state.rule.expr); };
-  auto match = [&](const auto &state, const auto &c) {
-    if (isComplete(state))
-      return false;
-    return state.rule.expr[state.p].symbol == c;
-  };
 
   for (size_t k = 0; k <= size(tokens); ++k) {
     std::set<size_t> predRules;
@@ -85,27 +138,16 @@ auto parseEarley(const Specification &spec, Tokens tokens) -> Expected<std::vect
     for (size_t i = 0; i < size(stateSets[k]); ++i) {
       auto s = stateSets[k][i];
       if (!isComplete(s)) {
+        if(k == size(tokens))
+          continue;
         auto next = s.rule.expr[s.p];
 
         // prediction
-        size_t ct = 0, fc = 0;
-        for (auto &rule : spec) {
-          if (rule.symbol == next.symbol && predRules.find(ct) == end(predRules)) {
-            stateSets[k].push_back(State{k, 0, rule, {rule.symbol, {}}});
-            predRules.insert(ct);
-            ++fc;
-          }
-          ++ct;
-        }
+        auto isNonTerminal = predict(stateSets, k, next, spec, predRules);
 
         // scanning
-        if (fc == 0 && tokens[k] == next.symbol) {
-          auto s2 = s;
-          if (!s2.rule.expr[s2.p].arbitrary)
-            s2.p += 1;
-          s2.node.children.push_back(Node{next.symbol, {}});
-          stateSets[k + 1].push_back(s2);
-        }
+        if (!isNonTerminal && tokens[k] == next.symbol)
+          scan(stateSets, k, next, s);
 
         // TODO
         if (next.optional || next.arbitrary) {
@@ -116,51 +158,19 @@ auto parseEarley(const Specification &spec, Tokens tokens) -> Expected<std::vect
 
       } else {
         // completion
-        auto sz = size(stateSets[s.i]);
-        for (size_t j = 0; j < sz; ++j)
-          if (match(stateSets[s.i][j], s.rule.symbol)) {
-            auto sc = stateSets[s.i][j];
-            if (!sc.rule.expr[sc.p].arbitrary)
-              sc.p += 1;
-
-            if (sc.rule.expr[sc.p].oneOrMore) {
-              sc.rule.expr[sc.p].oneOrMore = false;
-              sc.rule.expr[sc.p].arbitrary = true;
-            }
-
-            if (sc.rule.alias) {
-              sc.node.children = s.node.children;
-            } else {
-              if (s.rule.intermediate) {
-                for (auto n : s.node.children)
-                  sc.node.children.push_back(n);
-              } else {
-                sc.node.children.push_back(s.node);
-              }
-            }
-
-            auto ssc = sc;
-            stateSets[k].push_back(sc);
-          }
+        complete(stateSets, k, s);
       }
     }
   }
-
-  int npossibilities = 0;
-  for (auto s : stateSets.back())
-    if (s.node.symbol == spec.rules.front().symbol)
-      if (s.p == size(s.rule.expr))
-        ++npossibilities;
-
-  if (npossibilities == 0)
-    return Error<>("Unable to parse input");
-
   std::vector<Node> nodes;
 
   for (auto s : stateSets.back())
     if (s.node.symbol == spec.rules.front().symbol)
       if (s.p == size(s.rule.expr))
         nodes.push_back(s.node);
+
+  if (size(nodes) == 0)
+    return Error<>("Unable to parse input");
 
   return nodes;
 }

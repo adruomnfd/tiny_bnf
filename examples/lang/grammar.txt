@@ -23,8 +23,9 @@ ADJP-PRD2 >= ADJP
 ADJP-PRD  >= ADJP
 
 NP   >= D? ADJP* (N | PRO)
-ADJP >= ADJ
+ADJP >= ADVP? ADJ
+ADVP >= ADVP? ADV
 
-D >= a
+D >= a | an | the
 
 PU == .

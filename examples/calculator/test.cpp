@@ -1,11 +1,11 @@
-#include"calculator.h"
+#include "calculator.h"
 
 int main() {
   auto parser = buildParser();
 
 #define CHECK_ANSWER(x)                                                                            \
   if (auto val = eval(#x, parser)) {                                                               \
-    if (std::abs(*val - (x)) < 1e-4)                                                                               \
+    if (std::abs(*val - (x)) < 1e-4)                                                               \
       std::cout << #x << " = " << *val << '\n';                                                    \
     else                                                                                           \
       std::cout << "Answer to [" #x "] is not correct: " << *val << ", should be " << (x) << '\n'; \
