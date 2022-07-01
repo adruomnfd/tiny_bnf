@@ -125,9 +125,10 @@ auto complete(StateSets &stateSets, size_t k, State s) {
     }
 }
 
-auto parseEarley(const Specification &spec, Tokens tokens) -> Expected<std::vector<Node>> {
+auto parseEarley(Specification spec, Tokens tokens) -> Expected<std::vector<Node>> {
   auto stateSets = StateSets(size(tokens) + 1);
-  stateSets[0].push_back(State{0, 0, spec.rules.front(), Node{spec.rules.front().symbol, {}}});
+  for (size_t i = 0; i != size(spec.rules) && spec.rules[i].symbol == spec.rules[0].symbol; ++i)
+    stateSets[0].push_back(State{0, 0, spec.rules[i], Node{spec.rules[i].symbol, {}}});
 
   for (size_t k = 0; k <= size(tokens); ++k) {
     std::set<size_t> predRules;
@@ -135,15 +136,13 @@ auto parseEarley(const Specification &spec, Tokens tokens) -> Expected<std::vect
     for (size_t i = 0; i < size(stateSets[k]); ++i) {
       auto s = stateSets[k][i];
       if (!isComplete(s)) {
-        if (k == size(tokens))
-          continue;
         auto next = s.rule.expr[s.p];
 
         // prediction
         auto isNonTerminal = predict(stateSets, k, next, spec, predRules);
 
         // scanning
-        if (!isNonTerminal && tokens[k] == next.symbol)
+        if (k != size(tokens) && !isNonTerminal && tokens[k] == next.symbol)
           scan(stateSets, k, next, s);
 
         // TODO
@@ -176,9 +175,19 @@ auto parseEarley(const Specification &spec, Tokens tokens) -> Expected<std::vect
 auto parse(const Specification &spec, Tokens tokens, ParserType parserType) -> Expected<std::vector<Node>> {
   if (0)
     for (auto r : spec) {
-      std::cout << size(r.expr) << ' ' << r.symbol << " ::= ";
-      for (auto e : r.expr)
-        std::cout << e.symbol << " ";
+      std::cout << r.symbol << " ::= ";
+      for (auto e : r.expr) {
+        std::cout << e.symbol;
+        if (e.optional)
+          std::cout << "?";
+        if (e.arbitrary)
+          std::cout << "*";
+        if (e.oneOrMore)
+          std::cout << "+";
+        if (e.deref)
+          std::cout << "&";
+        std::cout << " ";
+      }
       std::cout << '\n';
     }
 
@@ -293,21 +302,16 @@ auto parseSpec(std::string text) -> Specification {
           spec.addLeftParenthesis();
         else if (parts[i] == ")")
           spec.addRightParenthesis();
+        else if (parts[i] == "?")
+          spec.activeRule().expr.back().optional = true;
+        else if (parts[i] == "*")
+          spec.activeRule().expr.back().arbitrary = true;
+        else if (parts[i] == "+")
+          spec.activeRule().expr.back().oneOrMore = true;
+        else if (parts[i] == "&")
+          spec.activeRule().expr.back().deref = true;
         else
           spec >= parts[i];
-        if (i + 1 < size(parts) && parts[i + 1] == "?") {
-          spec.activeRule().expr.back().optional = true;
-          ++i;
-        } else if (i + 1 < size(parts) && parts[i + 1] == "*") {
-          spec.activeRule().expr.back().arbitrary = true;
-          ++i;
-        } else if (i + 1 < size(parts) && parts[i + 1] == "+") {
-          spec.activeRule().expr.back().oneOrMore = true;
-          ++i;
-        } else if (i + 1 < size(parts) && parts[i + 1] == "&") {
-          spec.activeRule().expr.back().deref = true;
-          ++i;
-        }
       }
     }
   });

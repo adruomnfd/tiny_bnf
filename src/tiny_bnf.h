@@ -247,7 +247,7 @@ struct Specification {
 
   auto addLeftParenthesis() -> Specification & {
     ps.push_back(p);
-    auto scopeName = "tiny_bnf.parenthesis#" + std::to_string(nParentheses++);
+    auto scopeName = ".par#" + std::to_string(nParentheses++);
     addSymbol(scopeName);
     activeRule().intermediate = true;
     return *this;
@@ -303,7 +303,7 @@ struct Node {
   std::vector<Node> children;
 };
 
-inline bool operator==(const Node& a, const Node& b){
+inline bool operator==(const Node &a, const Node &b) {
   return a.symbol == b.symbol && a.children == b.children;
 }
 

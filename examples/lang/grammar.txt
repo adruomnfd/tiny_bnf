@@ -1,4 +1,5 @@
 Sentence >= IP-MAT PU?
+Sentence >= NP | ADJP | ADVP | PP
 
 # =====CLAUSES=====
 
@@ -52,11 +53,11 @@ NP-PRD2 >= NP&
 ADJP-PRD2 >= ADJP&
 ADJP-PRD  >= ADJP&
 
-MD >= can could may might will would shall should
-EX >= there
+MD  >= can could may might will would shall should
+EX  >= there
 NEG >= not
-TO >= to
-CQ >= whether
+TO  >= to
+CQ  >= whether
 
 DO  >= do
 DOP >= do does
@@ -65,12 +66,12 @@ DON >= done
 DAG >= doing
 
 # =====PHRASES=====
-NP      >= (D? | NP-GENV?) ADJP* NP~head& PP*
+NP      >= ADVP? Q? (D? | NP-GENV?) NUM? ADJP* N~nominal*& NP~head& ADJP? PP*
 NP-GENV >= NP& GENM | PRO~gen
 
-ADJP >= ADVP? ADJ~head&
-ADVP >= ADVP? ADV~head&
-PP   >= PP~head&
+ADJP >= ADVP? ADJP~head&
+ADVP >= ADVP? ADVP~head&
+PP   >= PP~head& NP
 
 # =====PHRASE CONSTITUENTS=====
 NP~head   >= PRO | PNX | NPR | NPRS | RPRO | WPRO | NQ | ND | N | NS
@@ -78,10 +79,12 @@ ADJP~head >= ADJ | ADJR | ADJS
 ADVP~head >= ADV | ADVR | ADVS
 PP~head   >= P
 
+N~nominal >= NP~head&
 D >= a | an | the
+Q >= all
 GENM >= <apos>s
 
-CONJP >= and or but
+CONJ >= and | but
 C >= that
 P-ROLE >= P&
 P-CONN >= P&

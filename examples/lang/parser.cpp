@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <set>
 
 namespace bnf = tiny_bnf;
 
@@ -10,11 +11,13 @@ void printTree(bnf::Node node, bool isRoot = true) {
     std::cout << node.symbol;
 
   if (size(node.children)) {
-    if (size(node.children) != 1) {
-      if (!isRoot)
-        std::cout << '[';
-    } else {
-      std::cout << ':';
+    if (!isRoot) {
+      if (size(node.children) != 1) {
+        if (!isRoot)
+          std::cout << '[';
+      } else {
+        std::cout << ':';
+      }
     }
 
     for (size_t i = 0; i < size(node.children); ++i) {
@@ -23,16 +26,14 @@ void printTree(bnf::Node node, bool isRoot = true) {
         std::cout << ' ';
     }
 
-    if (size(node.children) != 1)
-      if (!isRoot)
-        std::cout << ']';
+    if (!isRoot)
+      if (size(node.children) != 1)
+        if (!isRoot)
+          std::cout << ']';
   }
 }
 
 void parse(std::string text, bnf::Terminals terminals, bnf::Specification spec) {
-  text[0] = std::tolower(text[0]);
-  if (text[0] == 'i')
-    text[0] = 'I';
   std::cout << text << '\n';
   if (auto tokens = bnf::tokenize(terminals, text, true))
     if (auto trees = bnf::parse(spec, *tokens))
@@ -71,20 +72,26 @@ auto split(std::string line) {
 
 std::string dir = "examples/lang/";
 
-void importWords(bnf::Specification& spec) {
+auto importWords(bnf::Specification& spec) {
+  std::set<std::string> properNouns = {"I"};
+
   auto import = [&](auto filename) {
     std::string type;
     bnf::forEachLine(readFile(dir + filename), [&](auto w) {
       if (w[0] == '#')
         type = w.substr(1);
-      else
+      else {
         spec[type] >= w;
+        if (type == "NPR" || type == "NPRS")
+          properNouns.insert(w);
+      }
     });
   };
 
   import("noun.txt");
   import("adj.txt");
   import("adv.txt");
+  import("p.txt");
 
   bnf::forEachLine(readFile(dir + "verb.txt"), [&](auto w) {
     auto words = split(w.substr(0, w.find('/')));
@@ -109,17 +116,31 @@ void importWords(bnf::Specification& spec) {
       }
     }
   });
+
+  return properNouns;
 }
 
 int main() {
   auto spec = bnf::parseSpec(readFile(dir + "grammar.txt"));
-  importWords(spec);
+  auto properNouns = importWords(spec);
 
   auto terminals = bnf::autoTerminals(spec);
   terminals[" "] = "";
 
   bnf::forEachLine(readFile(dir + "sentences.txt"), [&](auto line) {
-    if (line[0] != '#')
+    if (line[0] != '#') {
+      std::stringstream ss(line);
+      std::string word;
+      line.clear();
+      while (ss >> word) {
+        if (properNouns.find(word) == end(properNouns))
+          for (auto& l : word)
+            if (std::isalpha(l))
+              l = std::tolower(l);
+        line += word + " ";
+      }
+      line.pop_back();
       parse(line, terminals, spec);
+    }
   });
 }

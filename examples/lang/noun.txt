@@ -18,6 +18,13 @@ her
 its
 their
 
+#PRO~gen2
+mine
+yours
+his 
+hers
+its
+theirs
 
 #PNX
 myself
@@ -25,11 +32,6 @@ yourself
 himself
 herself
 themselves
-
-#NPR
-heather
-
-#NPRS
 
 #RPRO
 that
@@ -59,7 +61,28 @@ that
 those
 these
 
+#NUM
+first
+
+#NPR
+June
+
+#NPRS
+
 #N
 book
+week
+noun
+adjective
+adverb
+proposition
+verb
+printer
+apprentice
+computer
+skill
+course
 
 #NS
+skills
+
