@@ -1,2 +1,3 @@
-a >= z | b
+a >= z p | b p
 b >= a a
+p >= q?

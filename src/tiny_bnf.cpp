@@ -66,6 +66,7 @@ struct State {
   size_t p = 0;
   Rule rule;
   Node node;
+  size_t parent = -1;
 };
 using StateSets = std::vector<std::vector<State>>;
 
@@ -139,10 +140,12 @@ auto parseEarley(Specification spec, Tokens tokens) -> Expected<std::vector<Node
   for (size_t k = 0; k <= size(tokens); ++k) {
     std::vector<bool> addedRules(size(spec.rules));
 
-    for (size_t i = 0; i < size(stateSets[k]); ++i) {
+    for (size_t i = 0; i < std::min(size(stateSets[k]), 100lu); ++i) {
       auto s = stateSets[k][i];
       if (1) {
-        std::cout << k << ' ' << s.i << ' ' << s.rule.symbol << " → ";
+        if(i == 0)
+          std::cout << "\n";
+        std::cout << s.i << ' ' << s.rule.symbol << " → ";
         for (size_t j = 0; j < s.p; j++)
           std::cout << s.rule.expr[j].symbol << ' ';
         std::cout << u8"• ";
