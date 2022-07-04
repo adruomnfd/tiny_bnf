@@ -1,7 +1,15 @@
 #ADJ
 young
+testable
+factual
+personal
+such
+total
+secondary
+public
 
 #ADJR
 
 
 #ADJS
+

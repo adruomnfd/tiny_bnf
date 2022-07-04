@@ -33,20 +33,25 @@ void printTree(bnf::Node node, bool isRoot = true) {
   }
 }
 
-void parse(std::string text, bnf::Terminals terminals, bnf::Specification spec) {
+int parse(std::string text, bnf::Terminals terminals, bnf::Specification spec) {
   std::cout << text << '\n';
   if (auto tokens = bnf::tokenize(terminals, text, true))
     if (auto trees = bnf::parse(spec, *tokens))
       for (auto tree : *trees) {
-        printTree(tree);
+        printTree(tree, false);
         std::cout << '\n';
       }
-    else
-      std::cout << "parser error: " << trees.error() << '\n';
-  else
-    std::cout << "tokenizer error: " << tokens.error() << '\n';
+    else {
+      std::cout << "parser error: " << trees.error() << "\n\n";
+      return 1;
+    }
+  else {
+    std::cout << "tokenizer error: " << tokens.error() << "\n\n";
+    return 1;
+  }
 
   std::cout << '\n';
+  return 0;
 }
 
 auto readFile(std::string filename) -> std::string {
@@ -78,6 +83,8 @@ auto importWords(bnf::Specification& spec) {
   auto import = [&](auto filename) {
     std::string type;
     bnf::forEachLine(readFile(dir + filename), [&](auto w) {
+      if (auto p = w.find_first_of(' '); p != w.npos)
+        w = w.substr(0, p);
       if (w[0] == '#')
         type = w.substr(1);
       else {
@@ -121,13 +128,15 @@ auto importWords(bnf::Specification& spec) {
 }
 
 int main() {
-  auto spec = bnf::parseSpec(readFile(dir + "grammar.txt"));
+  auto spec = bnf::parseSpec(readFile(dir + "grammar2.txt"));
   auto properNouns = importWords(spec);
 
   auto terminals = bnf::autoTerminals(spec);
   terminals[" "] = "";
 
-  bnf::forEachLine(readFile(dir + "sentences.txt"), [&](auto line) {
+  int ret = 0;
+
+  bnf::forEachLine(readFile(dir + "sentence.txt"), [&](auto line) {
     if (line[0] != '#') {
       std::stringstream ss(line);
       std::string word;
@@ -140,7 +149,13 @@ int main() {
         line += word + " ";
       }
       line.pop_back();
-      parse(line, terminals, spec);
+
+      ret += parse(line, terminals, spec);
     }
   });
+
+  if (ret)
+    abort();
+
+  return ret;
 }

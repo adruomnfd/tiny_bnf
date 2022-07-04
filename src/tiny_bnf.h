@@ -116,12 +116,24 @@ struct Expr {
   bool deref = false;
 };
 
+inline bool operator==(const Expr &a, const Expr &b) {
+  return a.symbol == b.symbol && a.optional == b.optional && a.arbitrary == b.arbitrary && a.oneOrMore == b.oneOrMore;
+}
+
 struct Rule {
   std::string symbol;
   std::vector<Expr> expr;
+  size_t idx = 0;
   bool intermediate = false;
   bool alias = false;
 };
+
+inline bool operator==(const Rule &a, const Rule &b) {
+  return a.symbol == b.symbol && a.expr == b.expr;
+}
+inline bool operator!=(const Rule &a, const Rule &b) {
+  return !(a == b);
+}
 
 inline auto opt(std::string symbol) {
   return detail::Optional{symbol};
@@ -228,7 +240,7 @@ struct Specification {
   auto addSymbol(std::string symbol, bool setAsActive = true) -> Specification & {
     if (setAsActive)
       p = size(rules);
-    rules.push_back(Rule{std::move(symbol), {}});
+    rules.push_back(Rule{std::move(symbol), {}, size(rules)});
     return *this;
   }
 
@@ -242,6 +254,7 @@ struct Specification {
     rules.push_back(activeRule());
     p = size(rules) - 1;
     activeRule().expr.clear();
+    activeRule().idx += 1;
     return *this;
   }
 
@@ -428,7 +441,7 @@ void forEachLine(std::string text, F f) {
   std::stringstream ss(text);
   std::string line;
   while (std::getline(ss, line))
-    if (size(line))
+    if (size(line) && line.find_first_not_of(' ') != line.npos)
       f(line);
 }
 

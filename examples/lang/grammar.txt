@@ -1,8 +1,9 @@
-Sentence >= IP-MAT PU?
-Sentence >= NP | ADJP | ADVP | PP
+#Sentence >= IP-MAT PU?
+#Sentence >= NP | ADJP | ADVP | PP
+Sentence >= NP
 
 # =====CLAUSES=====
-
+# =================
 IP-MAT >= NP-SBJ V~Ln NP-PRD2
 IP-MAT >= NP-SBJ V~La ADJP-PRD2
 IP-MAT >= NP-SBJ V~I
@@ -19,33 +20,56 @@ IP-PPL~Vg >= VAG~Tn NP-OB1
 IP-PPL~Vg >= VAG~Cn.a NP-OB1 ADJP-PRD 
 IP-PPL~Vg >= VAG~Dn.n NP-OB2 NP-OB1
 
+# perfect construction
 IP-PPL~Ve >= VVN~Ln NP-PRD2 
-IP-PPL~Ve >= VVN~La ADJP-PRD2  
-IP-PPL~Ve >= VVN~I
-IP-PPL~Ve >= VVN~Tn NP-OB1
+IP-PPL~Ve >= VVN~La ADJP-PRD2 
+IP-PPL~Ve >= VVN~I 
+IP-PPL~Ve >= VVN~Tn NP-OB1 
 IP-PPL~Ve >= VVN~Cn.a NP-OB1 ADJP-PRD 
 IP-PPL~Ve >= VVN~Dn.n NP-OB2 NP-OB1
 
-IP-INF >= TO VB~Ln NP-PRD2 
-IP-INF >= TO VB~La ADJP-PRD2 
-IP-INF >= TO VB~I 
-IP-INF >= TO VB~Tn NP-OB1 
-IP-INF >= TO VB~Cn.a NP-OB1 ADJP-PRD 
-IP-INF >= TO VB~Dn.n NP-OB2 NP-OB1
+# passive voice
+IP-PPL~Ve >= VVN~Tn
+IP-PPL~Ve >= VVN~Cn.a ADJP-PRD
+IP-PPL~Ve >= VVN~Dn.n NP-OB2
 
-V~Ln     == VBP~Ln | VBD~Ln
-V~La     == VBP~La | VBD~La
-V~I      == VBP~I | VBD~I
-V~Tn     == VBP~Tn | VBD~Tn
-V~Cn.a   == VBP~Cn.a | VBD~Cn.a
-V~Dn.n   == VBP~Dn.n | VBD~Dn.n
-V~cat_Ve == VBP~cat_Ve | VBD~cat_Ve
-V~cat_Vg == VBP~cat_Vg | VBD~cat_Vg
+IP-INF~Vt >= TO VB~Ln NP-PRD2 
+IP-INF~Vt >= TO VB~La ADJP-PRD2 
+IP-INF~Vt >= TO VB~I 
+IP-INF~Vt >= TO VB~Tn NP-OB1 
+IP-INF~Vt >= TO VB~Cn.a NP-OB1 ADJP-PRD 
+IP-INF~Vt >= TO VB~Dn.n NP-OB2 NP-OB1
+
+IP-INF~Vi >= VB~Ln NP-PRD2 
+IP-INF~Vi >= VB~La ADJP-PRD2 
+IP-INF~Vi >= VB~I 
+IP-INF~Vi >= VB~Tn NP-OB1 
+IP-INF~Vi >= VB~Cn.a NP-OB1 ADJP-PRD 
+IP-INF~Vi >= VB~Dn.n NP-OB2 NP-OB1
+
+V~Ln     == VBP~Ln | VBD~Ln | MD VB~Ln
+V~La     == VBP~La | VBD~La | MD VB~La
+V~I      == VBP~I | VBD~I | MD VB~I
+V~Tn     == VBP~Tn | VBD~Tn | MD VB~Tn
+V~Cn.a   == VBP~Cn.a | VBD~Cn.a | MD VB~Cn.n
+V~Dn.n   == VBP~Dn.n | VBD~Dn.n | MD VB~Dn.n
+V~cat_Ve == VBP~cat_Ve | VBD~cat_Ve | MD VB~cat_Ve
+V~cat_Vg == VBP~cat_Vg | VBD~cat_Vg | MD VB~cat_Vg
 
 IP-PPL-CAT~Vg >= IP-PPL~Vg&
 IP-PPL-CAT~Ve >= IP-PPL~Ve&
+IP-PPL == IP-PPL~Ve | IP-PPL~Vg
+IP-PPL~single >= VVN~Tn | VAG~I
+
+IP-SUB~c >= C IP-MAT&
+IP-SUB   >= C? IP-MAT&
+
+CP-THT~c >= IP-SUB~c
+CP-THT   >= IP-SUB
+
 
 # =====CLAUSE CONSTITUENTS=====
+# =============================
 NP-SBJ  >= NP&
 NP-OB1  >= NP&
 NP-OB2  >= NP&
@@ -53,7 +77,7 @@ NP-PRD2 >= NP&
 ADJP-PRD2 >= ADJP&
 ADJP-PRD  >= ADJP&
 
-MD  >= can could may might will would shall should
+MD  >= can | could | may | might | will | would | shall | should
 EX  >= there
 NEG >= not
 TO  >= to
@@ -66,23 +90,39 @@ DON >= done
 DAG >= doing
 
 # =====PHRASES=====
-NP      >= ADVP? Q? (D? | NP-GENV?) NUM? ADJP* N~nominal*& NP~head& ADJP? PP*
-NP-GENV >= NP& GENM | PRO~gen
+# =================
+NP >= NP~head NP~posthead
+#NP >= (ND | NQ) ADVP? ADJP? NP~posthead
 
 ADJP >= ADVP? ADJP~head&
 ADVP >= ADVP? ADVP~head&
 PP   >= PP~head& NP
 
+
 # =====PHRASE CONSTITUENTS=====
-NP~head   >= PRO | PNX | NPR | NPRS | RPRO | WPRO | NQ | ND | N | NS
+# =============================
+NP~head == PRO | PNX | NPR | NPRS | RPRO | WPRO | N | NS | NML~conj
+ 
+#             [about]  [my]      [all | five]  [such  a  | those | my]        [four]  [great]  [sleeping]      [internet] 
+NP~prehead == ADVP?    NP-GENV?  (Q   | NUM)?  (ADJP? D? | ND~n? | NP-GENV?)  NUM?    ADJP*    IP-PPL~single?  NP~nominal*
+           
+NP~posthead == PP* (IP-PPL | IP-INF~Vt | CP-THT~c)?
+
+NP~nominal == NPR | NPRS | N | NS | NML
+
+NP-GENV >= NP& GENM | PRO~gen
+GENM >= <apos>s
+
+NML >= NP~head PP
+NML >= ADJP NP~head
+NML >= (NUM | NP~nominal) <hyphen> NP~head
+
+NML~conj >= NP , NP
+CONJP >=  CONJ? NP
+
 ADJP~head >= ADJ | ADJR | ADJS
 ADVP~head >= ADV | ADVR | ADVS
-PP~head   >= P
-
-N~nominal >= NP~head&
-D >= a | an | the
-Q >= all
-GENM >= <apos>s
+PP~head >= P
 
 CONJ >= and | but
 C >= that

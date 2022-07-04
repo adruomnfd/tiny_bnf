@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
-#include <set>
+#include <map>
 
 namespace tiny_bnf {
 
@@ -79,20 +79,22 @@ auto match(const State &state, const std::string &c) {
   return state.rule.expr[state.p].symbol == c;
 }
 
-auto predict(StateSets &stateSets, size_t k, Expr next, const Specification &spec, std::set<size_t> &predRules) {
-  size_t ct = 0, fc = 0;
-  for (auto &rule : spec) {
-    if (rule.symbol == next.symbol && predRules.find(ct) == end(predRules)) {
-      stateSets[k].push_back(State{k, 0, rule, {rule.symbol, {}}});
-      predRules.insert(ct);
-      ++fc;
+auto predict(StateSets &stateSets, size_t k, const Expr &next, const std::map<std::string, std::vector<Rule>> &rules,
+             std::vector<bool> &addedRules) {
+  auto it = rules.find(next.symbol);
+  if (it == end(rules))
+    return false;
+  for (auto &rule : it->second)
+    if (rule.symbol == next.symbol) {
+      if (!addedRules[rule.idx]) {
+        stateSets[k].push_back(State{k, 0, rule, {rule.symbol, {}}});
+        addedRules[rule.idx] = true;
+      }
     }
-    ++ct;
-  }
-  return fc != 0;
+  return true;
 }
 
-auto scan(StateSets &stateSets, size_t k, Expr next, State s) {
+auto scan(StateSets &stateSets, size_t k, const Expr &next, const State &s) {
   auto s2 = s;
   if (!s2.rule.expr[s2.p].arbitrary)
     s2.p += 1;
@@ -100,7 +102,7 @@ auto scan(StateSets &stateSets, size_t k, Expr next, State s) {
   stateSets[k + 1].push_back(s2);
 }
 
-auto complete(StateSets &stateSets, size_t k, State s) {
+auto complete(StateSets &stateSets, size_t k, const State &s) {
   auto sz = size(stateSets[s.i]);
   for (size_t j = 0; j < sz; ++j)
     if (match(stateSets[s.i][j], s.rule.symbol)) {
@@ -130,40 +132,53 @@ auto parseEarley(Specification spec, Tokens tokens) -> Expected<std::vector<Node
   for (size_t i = 0; i != size(spec.rules) && spec.rules[i].symbol == spec.rules[0].symbol; ++i)
     stateSets[0].push_back(State{0, 0, spec.rules[i], Node{spec.rules[i].symbol, {}}});
 
+  std::map<std::string, std::vector<Rule>> rules;
+  for (auto &rule : spec)
+    rules[rule.symbol].push_back(rule);
+
   for (size_t k = 0; k <= size(tokens); ++k) {
-    std::set<size_t> predRules;
+    std::vector<bool> addedRules(size(spec.rules));
 
     for (size_t i = 0; i < size(stateSets[k]); ++i) {
       auto s = stateSets[k][i];
+      if (1) {
+        std::cout << k << ' ' << s.i << ' ' << s.rule.symbol << " → ";
+        for (size_t j = 0; j < s.p; j++)
+          std::cout << s.rule.expr[j].symbol << ' ';
+        std::cout << u8"• ";
+        for (size_t j = s.p; j < size(s.rule.expr); j++)
+          std::cout << s.rule.expr[j].symbol << ' ';
+        std::cout << '\n';
+      }
+
       if (!isComplete(s)) {
-        auto next = s.rule.expr[s.p];
+        const auto &next = s.rule.expr[s.p];
 
         // prediction
-        auto isNonTerminal = predict(stateSets, k, next, spec, predRules);
+        auto isNonTerminal = predict(stateSets, k, next, rules, addedRules);
 
         // scanning
         if (k != size(tokens) && !isNonTerminal && tokens[k] == next.symbol)
           scan(stateSets, k, next, s);
 
-        // TODO
         if (next.optional || next.arbitrary) {
-          auto s2 = s;
-          s2.p += 1;
-          stateSets[k].push_back(s2);
+          s.p += 1;
+          stateSets[k].push_back(s);
         }
 
       } else {
         // completion
         complete(stateSets, k, s);
+        addedRules[s.rule.idx] = false;
       }
     }
   }
 
   std::vector<Node> nodes;
 
-  for (auto s : stateSets.back())
-    if (s.node.symbol == spec.rules.front().symbol)
-      if (s.p == size(s.rule.expr) && std::find(begin(nodes), end(nodes), s.node) == end(nodes))
+  for (auto &s : stateSets.back())
+    if (s.i == 0 && s.node.symbol == spec.rules.front().symbol)
+      if (isComplete(s) && std::find(begin(nodes), end(nodes), s.node) == end(nodes))
         nodes.push_back(s.node);
 
   if (size(nodes) == 0)
@@ -188,7 +203,7 @@ auto parse(const Specification &spec, Tokens tokens, ParserType parserType) -> E
           std::cout << "&";
         std::cout << " ";
       }
-      std::cout << '\n';
+      std::cout << r.idx << '\n';
     }
 
   switch (parserType) {

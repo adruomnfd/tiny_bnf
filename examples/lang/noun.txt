@@ -1,3 +1,14 @@
+#D
+a
+an
+the
+some
+
+#Q
+all
+every
+each
+
 #PRO
 I
 me
@@ -47,15 +58,27 @@ whom
 whose
 
 #NQ
+everyone
 everybody
+everything
+none
+nobody
 nothing
+
+#NQ~pr
 much
 a_lot
 
 #ND
 someone
+somebody
+something
+anyone
+anybody
 anything
 another
+
+#ND~n
 this
 that
 those
@@ -63,13 +86,29 @@ these
 
 #NUM
 first
+second
+third
+one
+two
+three
+four
+five
+1
+2
+3
+4
+5
 
 #NPR
 June
+Samuel
+Beckett
+Britain
 
 #NPRS
 
 #N
+one
 book
 week
 noun
@@ -82,7 +121,31 @@ apprentice
 computer
 skill
 course
+voice
+data
+basis
+operator
+information
+way
+wish
+aid
+grant
+program
+school
+spending
+score
+year
+milestone
+state
+highway
+department
+director
+kitchen
+hall
+dining
+room
 
 #NS
 skills
+relations
 
