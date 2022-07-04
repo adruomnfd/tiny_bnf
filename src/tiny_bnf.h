@@ -316,6 +316,13 @@ struct Node {
   std::vector<Node> children;
 };
 
+template <typename F>
+void traverse(Node &node, F f, int depth = 0, int w = 0) {
+  f(node, depth, w);
+  for (auto &n : node.children)
+    traverse(n, f, depth + 1, w++);
+}
+
 inline bool operator==(const Node &a, const Node &b) {
   return a.symbol == b.symbol && a.children == b.children;
 }

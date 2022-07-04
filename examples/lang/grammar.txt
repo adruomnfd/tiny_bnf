@@ -1,6 +1,5 @@
-#Sentence >= IP-MAT PU?
-#Sentence >= NP | ADJP | ADVP | PP
-Sentence >= NP
+Sentence >= IP-MAT PU?
+Sentence >= NP | ADJP | ADVP | PP
 
 # =====CLAUSES=====
 # =================
@@ -10,42 +9,42 @@ IP-MAT >= NP-SBJ V~I
 IP-MAT >= NP-SBJ V~Tn NP-OB1
 IP-MAT >= NP-SBJ V~Cn.a NP-OB1 ADJP-PRD
 IP-MAT >= NP-SBJ V~Dn.n NP-OB2 NP-OB1
-IP-MAT >= NP-SBJ V~cat_Ve IP-PPL-CAT~Ve
-IP-MAT >= NP-SBJ V~cat_Vg IP-PPL-CAT~Vg
+IP-MAT >= NP-SBJ V~cat_Ve IP-PPL-CAT.Ve
+IP-MAT >= NP-SBJ V~cat_Vg IP-PPL-CAT.Vg
 
-IP-PPL~Vg >= VAG~Ln NP-PRD2 
-IP-PPL~Vg >= VAG~La ADJP-PRD2 
-IP-PPL~Vg >= VAG~I 
-IP-PPL~Vg >= VAG~Tn NP-OB1 
-IP-PPL~Vg >= VAG~Cn.a NP-OB1 ADJP-PRD 
-IP-PPL~Vg >= VAG~Dn.n NP-OB2 NP-OB1
+IP-PPL.Vg >= VAG~Ln NP-PRD2 
+IP-PPL.Vg >= VAG~La ADJP-PRD2 
+IP-PPL.Vg >= VAG~I 
+IP-PPL.Vg >= VAG~Tn NP-OB1 
+IP-PPL.Vg >= VAG~Cn.a NP-OB1 ADJP-PRD 
+IP-PPL.Vg >= VAG~Dn.n NP-OB2 NP-OB1
 
 # perfect construction
-IP-PPL~Ve >= VVN~Ln NP-PRD2 
-IP-PPL~Ve >= VVN~La ADJP-PRD2 
-IP-PPL~Ve >= VVN~I 
-IP-PPL~Ve >= VVN~Tn NP-OB1 
-IP-PPL~Ve >= VVN~Cn.a NP-OB1 ADJP-PRD 
-IP-PPL~Ve >= VVN~Dn.n NP-OB2 NP-OB1
+IP-PPL.Ve >= VVN~Ln NP-PRD2 
+IP-PPL.Ve >= VVN~La ADJP-PRD2 
+IP-PPL.Ve >= VVN~I 
+IP-PPL.Ve >= VVN~Tn NP-OB1 
+IP-PPL.Ve >= VVN~Cn.a NP-OB1 ADJP-PRD 
+IP-PPL.Ve >= VVN~Dn.n NP-OB2 NP-OB1
 
 # passive voice
-IP-PPL~Ve >= VVN~Tn
-IP-PPL~Ve >= VVN~Cn.a ADJP-PRD
-IP-PPL~Ve >= VVN~Dn.n NP-OB2
+IP-PPL.Ve >= VVN~Tn
+IP-PPL.Ve >= VVN~Cn.a ADJP-PRD
+IP-PPL.Ve >= VVN~Dn.n NP-OB2
 
-IP-INF~Vt >= TO VB~Ln NP-PRD2 
-IP-INF~Vt >= TO VB~La ADJP-PRD2 
-IP-INF~Vt >= TO VB~I 
-IP-INF~Vt >= TO VB~Tn NP-OB1 
-IP-INF~Vt >= TO VB~Cn.a NP-OB1 ADJP-PRD 
-IP-INF~Vt >= TO VB~Dn.n NP-OB2 NP-OB1
+IP-INF.Vt >= TO VB~Ln NP-PRD2 
+IP-INF.Vt >= TO VB~La ADJP-PRD2 
+IP-INF.Vt >= TO VB~I 
+IP-INF.Vt >= TO VB~Tn NP-OB1 
+IP-INF.Vt >= TO VB~Cn.a NP-OB1 ADJP-PRD 
+IP-INF.Vt >= TO VB~Dn.n NP-OB2 NP-OB1
 
-IP-INF~Vi >= VB~Ln NP-PRD2 
-IP-INF~Vi >= VB~La ADJP-PRD2 
-IP-INF~Vi >= VB~I 
-IP-INF~Vi >= VB~Tn NP-OB1 
-IP-INF~Vi >= VB~Cn.a NP-OB1 ADJP-PRD 
-IP-INF~Vi >= VB~Dn.n NP-OB2 NP-OB1
+IP-INF.Vi >= VB~Ln NP-PRD2 
+IP-INF.Vi >= VB~La ADJP-PRD2 
+IP-INF.Vi >= VB~I 
+IP-INF.Vi >= VB~Tn NP-OB1 
+IP-INF.Vi >= VB~Cn.a NP-OB1 ADJP-PRD
+IP-INF.Vi >= VB~Dn.n NP-OB2 NP-OB1
 
 V~Ln     == VBP~Ln | VBD~Ln | MD VB~Ln
 V~La     == VBP~La | VBD~La | MD VB~La
@@ -56,17 +55,17 @@ V~Dn.n   == VBP~Dn.n | VBD~Dn.n | MD VB~Dn.n
 V~cat_Ve == VBP~cat_Ve | VBD~cat_Ve | MD VB~cat_Ve
 V~cat_Vg == VBP~cat_Vg | VBD~cat_Vg | MD VB~cat_Vg
 
-IP-PPL-CAT~Vg >= IP-PPL~Vg&
-IP-PPL-CAT~Ve >= IP-PPL~Ve&
-IP-PPL == IP-PPL~Ve | IP-PPL~Vg
-IP-PPL~single >= VVN~Tn | VAG~I
+IP-PPL-CAT.Vg >= IP-PPL.Vg&
+IP-PPL-CAT.Ve >= IP-PPL.Ve&
+IP-PPL == IP-PPL.Ve | IP-PPL.Vg
+IP-PPL.single >= VVN~Tn | VAG~I
 
-IP-SUB~c >= C IP-MAT&
+IP-SUB.c >= C IP-MAT&
 IP-SUB   >= C? IP-MAT&
 
-CP-THT~c >= IP-SUB~c
+CP-THT.c >= IP-SUB.c
 CP-THT   >= IP-SUB
-
+IP-REL >= IP-MAT&
 
 # =====CLAUSE CONSTITUENTS=====
 # =============================
@@ -91,40 +90,45 @@ DAG >= doing
 
 # =====PHRASES=====
 # =================
-NP >= NP~head NP~posthead
-#NP >= (ND | NQ) ADVP? ADJP? NP~posthead
+NP >= NP.prehead NP.head NP.posthead
+NP >= (D.N | Q.N) ADVP? ADJP? NP.posthead
+NP >= Q.N.pr PP
 
-ADJP >= ADVP? ADJP~head&
-ADVP >= ADVP? ADVP~head&
-PP   >= PP~head& NP
+ADJP >= ADVP? ADJP.head&
+ADVP >= ADVP? ADVP.head&
+PP   >= PP.head& NP
 
 
 # =====PHRASE CONSTITUENTS=====
 # =============================
-NP~head == PRO | PNX | NPR | NPRS | RPRO | WPRO | N | NS | NML~conj
+
+# ===NP===
+NP.head == PRO | PNX | NPR | NPRS | RPRO | WPRO | N | NS | NML
  
 #             [about]  [my]      [all | five]  [such  a  | those | my]        [four]  [great]  [sleeping]      [internet] 
-NP~prehead == ADVP?    NP-GENV?  (Q   | NUM)?  (ADJP? D? | ND~n? | NP-GENV?)  NUM?    ADJP*    IP-PPL~single?  NP~nominal*
+NP.prehead == ADVP?    NP-GENV?  (Q   | NUM)?  (ADJP? D? | D.N.n? | NP-GENV?)  NUM?    ADJP*    IP-PPL.single?  NP.nominal*
            
-NP~posthead == PP* (IP-PPL | IP-INF~Vt | CP-THT~c)?
+NP.posthead == PP* (IP-PPL | IP-INF.Vt | CP-THT.c)?
 
-NP~nominal == NPR | NPRS | N | NS | NML
+NP.nominal == NPR | NPRS | N | NS | NML
 
-NP-GENV >= NP& GENM | PRO~gen
+NP-GENV >= NP& GENM | PRO.gen
 GENM >= <apos>s
 
-NML >= NP~head PP
-NML >= ADJP NP~head
-NML >= (NUM | NP~nominal) <hyphen> NP~head
+NML >= NP.head PP
+NML >= ADJP NP.head
+NML >= (NUM | NP.nominal) <hyphen> NP.head
 
-NML~conj >= NP , NP
-CONJP >=  CONJ? NP
+NML >= NP CONJP.c | NP (, CONJP)+ , CONJP.c
+CONJP >= NP
+CONJP.c >= CONJ NP
 
-ADJP~head >= ADJ | ADJR | ADJS
-ADVP~head >= ADV | ADVR | ADVS
-PP~head >= P
+# ===ADJP===
+ADJP.head >= ADJ | ADJR | ADJS
+ADVP.head >= ADV | ADVR | ADVS
+PP.head >= P
 
-CONJ >= and | but
+CONJ >= and | or
 C >= that
 P-ROLE >= P&
 P-CONN >= P&

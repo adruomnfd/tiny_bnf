@@ -61,12 +61,13 @@ void traverseNode(Node n, F f) {
   for (auto &r : n.children)
     traverseNode(r, f);
 }
+
 struct State {
   size_t i = 0;
   size_t p = 0;
   Rule rule;
   Node node;
-  size_t parent = -1;
+  size_t start = 0;
 };
 using StateSets = std::vector<std::vector<State>>;
 
@@ -80,17 +81,15 @@ auto match(const State &state, const std::string &c) {
   return state.rule.expr[state.p].symbol == c;
 }
 
-auto predict(StateSets &stateSets, size_t k, const Expr &next, const std::map<std::string, std::vector<Rule>> &rules,
-             std::vector<bool> &addedRules) {
+auto predict(StateSets &stateSets, size_t k, size_t i, const Expr &next,
+             const std::map<std::string, std::vector<Rule>> &rules, std::vector<bool> &addedRules) {
   auto it = rules.find(next.symbol);
   if (it == end(rules))
     return false;
   for (auto &rule : it->second)
-    if (rule.symbol == next.symbol) {
-      if (!addedRules[rule.idx]) {
-        stateSets[k].push_back(State{k, 0, rule, {rule.symbol, {}}});
-        addedRules[rule.idx] = true;
-      }
+    if (!addedRules[rule.idx]) {
+      stateSets[k].push_back(State{k, 0, rule, {rule.symbol, {}}, i});
+      addedRules[rule.idx] = true;
     }
   return true;
 }
@@ -105,7 +104,7 @@ auto scan(StateSets &stateSets, size_t k, const Expr &next, const State &s) {
 
 auto complete(StateSets &stateSets, size_t k, const State &s) {
   auto sz = size(stateSets[s.i]);
-  for (size_t j = 0; j < sz; ++j)
+  for (size_t j = s.start; j < sz; ++j)
     if (match(stateSets[s.i][j], s.rule.symbol)) {
       auto sc = stateSets[s.i][j];
 
@@ -140,10 +139,10 @@ auto parseEarley(Specification spec, Tokens tokens) -> Expected<std::vector<Node
   for (size_t k = 0; k <= size(tokens); ++k) {
     std::vector<bool> addedRules(size(spec.rules));
 
-    for (size_t i = 0; i < std::min(size(stateSets[k]), 100lu); ++i) {
+    for (size_t i = 0; i < size(stateSets[k]); ++i) {
       auto s = stateSets[k][i];
-      if (1) {
-        if(i == 0)
+      if (0) {
+        if (i == 0)
           std::cout << "\n";
         std::cout << s.i << ' ' << s.rule.symbol << " → ";
         for (size_t j = 0; j < s.p; j++)
@@ -158,7 +157,7 @@ auto parseEarley(Specification spec, Tokens tokens) -> Expected<std::vector<Node
         const auto &next = s.rule.expr[s.p];
 
         // prediction
-        auto isNonTerminal = predict(stateSets, k, next, rules, addedRules);
+        auto isNonTerminal = predict(stateSets, k, i, next, rules, addedRules);
 
         // scanning
         if (k != size(tokens) && !isNonTerminal && tokens[k] == next.symbol)

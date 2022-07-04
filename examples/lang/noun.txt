@@ -5,6 +5,7 @@ the
 some
 
 #Q
+no
 all
 every
 each
@@ -20,22 +21,26 @@ her
 it
 they
 them
+our
+us
 
-#PRO~gen
+#PRO.gen
 my
 your
 his
 her
 its
 their
+our
 
-#PRO~gen2
+#PRO.gen2
 mine
 yours
 his 
 hers
 its
 theirs
+ours
 
 #PNX
 myself
@@ -57,7 +62,7 @@ who
 whom
 whose
 
-#NQ
+#Q.N
 everyone
 everybody
 everything
@@ -65,11 +70,11 @@ none
 nobody
 nothing
 
-#NQ~pr
+#Q.N.pr
 much
 a_lot
 
-#ND
+#D.N
 someone
 somebody
 something
@@ -78,7 +83,7 @@ anybody
 anything
 another
 
-#ND~n
+#D.N.n
 this
 that
 those
@@ -104,6 +109,10 @@ June
 Samuel
 Beckett
 Britain
+A_
+B_
+C_
+D_
 
 #NPRS
 
@@ -144,8 +153,11 @@ kitchen
 hall
 dining
 room
+sitting
 
 #NS
 skills
 relations
+issues
+problems
 
