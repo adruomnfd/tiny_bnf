@@ -12,11 +12,14 @@ include_directories(./src)
 
 add_library(tiny_bnf src/tiny_bnf.cpp)
 
-add_executable(calc examples/calculator/calc.cpp)
+add_executable(calc examples/calc/calc.cpp)
 target_link_libraries(calc tiny_bnf)
 
-add_executable(calc_test examples/calculator/test.cpp)
+add_executable(calc_test examples/calc/test.cpp)
 target_link_libraries(calc_test tiny_bnf)
 
+add_executable(minimal examples/minimal.cpp) 
+target_link_libraries(minimal tiny_bnf)
+
 add_executable(lang examples/lang/parser.cpp)
-target_link_libraries(lang tiny_bnf)
+ target_link_libraries(lang tiny_bnf)

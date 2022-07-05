@@ -1,4 +1,4 @@
-#include "calculator.h"
+#include "calc.h"
 
 int main() {
   auto parser = buildParser();

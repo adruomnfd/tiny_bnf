@@ -1,7 +1,7 @@
 #include <iostream>
 #include <variant>
 
-#include "tiny_bnf.h"
+#include <tiny_bnf.h>
 
 template <typename T>
 struct Indirect {
@@ -163,14 +163,9 @@ struct Stmt {
   Expr expr;
 };
 
-void debugTree(tiny_bnf::Node node, int depth = 0) {
-  std::cout << std::string(depth, ' ') << node.symbol << '\n';
-  for (auto child : node.children)
-    debugTree(child, depth + 1);
-}
-
 auto buildParser() {
   tiny_bnf::Specification spec;
+  using tiny_bnf::opt;
 
   spec["stmt"] >= "expr";
 
@@ -187,7 +182,7 @@ auto buildParser() {
 
   spec["number"] >= "integer" | "integer", ".", "integer";
 
-  spec["integer"] >= "digit" | "integer", "digit";
+  spec["integer"] >= opt("integer"), "digit";
 
   spec["digit"] >= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 
@@ -236,7 +231,6 @@ tiny_bnf::Expected<float> eval(
     return tiny_bnf::Error<>("Failed to tokenize: " + tokens.error());
 
   auto tree = tiny_bnf::parse(spec, *tokens, tiny_bnf::ParserType::Earley);
-  // debugTree(*tree);
 
   if (!tree)
     return tiny_bnf::Error<>("Failed to parse: " + tree.error());

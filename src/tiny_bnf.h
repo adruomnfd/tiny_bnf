@@ -185,9 +185,9 @@ struct Specification {
     return addExpr(symbol);
   }
 
-  auto operator,(detail::Or) -> Specification & {
-    return addAlternative();
-  }
+  auto operator,(detail::Or) -> Specification & {  return addAlternative(); }
+  auto operator,(detail::Leftparenthesis) -> Specification & {  return addLeftParenthesis(); }
+  auto operator,(detail::RightParenthesis) -> Specification & {  return addRightParenthesis(); }
 
   auto addSymbol(std::string symbol, bool setAsActive = true) -> Specification & {
     if (setAsActive)
@@ -339,15 +339,20 @@ struct Generator {
     using Concept::Concept;
 
     auto construct(std::vector<AnnotatedPtr> args) -> std::optional<AnnotatedPtr> override {
+      if constexpr (CheckUseString<Ctors...>::value){
+        return std::nullopt;
+      }
+      else{
       if constexpr (sizeof...(Ctors) == 0)
         return AnnotatedPtr{new T(), typeid(T).hash_code()};
       else
         return match(args, Ctors{}...);
+      }
     }
 
     auto construct(std::string expr) -> std::optional<AnnotatedPtr> override {
       if constexpr (CheckUseString<Ctors...>::value)
-        return new T(expr);
+        return AnnotatedPtr{new T(expr), typeid(T).hash_code()};
       else
         return std::nullopt;
     }
@@ -379,7 +384,7 @@ struct Generator {
 
   template <typename T>
   void bind(std::string name, UseString) {
-    models[name] = std::make_unique<Model<T>>(true);
+    models[name] = std::make_unique<Model<T, UseString>>(true);
   }
 
   auto findModel(std::string symbol) const -> std::optional<Concept *> {

@@ -1,7 +1,3 @@
-**work in progress**
-
-## Minimal Example
-```c++
 #include <tiny_bnf.h>
 
 #include <iostream>
@@ -36,4 +32,3 @@ int main() {
 
   std::cout << number->val << "\n";
 }
-```
