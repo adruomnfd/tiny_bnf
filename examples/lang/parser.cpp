@@ -51,128 +51,127 @@ int parse(std::string text, bnf::Terminals terminals, bnf::Specification spec) {
         if (d == depth)
           shallowest.push_back(i);
       }
-        for (auto i : shallowest) {
-          printTree((*trees)[i]);
-          std::cout << '\n';
-        }
+      for (auto i : shallowest) {
+        printTree((*trees)[i]);
+        std::cout << '\n';
       }
-      else {
-        std::cout << "parser error: " << trees.error() << "\n\n";
-        return 1;
-      }
-      else {
-        std::cout << "tokenizer error: " << tokens.error() << "\n\n";
-        return 1;
-      }
-
-      std::cout << '\n';
-      return 0;
+    } else {
+      std::cout << "parser error: " << trees.error() << "\n\n";
+      return 1;
     }
-
-  auto readFile(std::string filename)->std::string {
-    std::ifstream file(filename);
-    if (!file.is_open())
-      std::cout << "cannot open: " << filename << '\n';
-    file.seekg(0, file.end);
-    std::string str;
-    str.resize(file.tellg());
-    file.seekg(file.beg);
-    file.read(&str[0], size(str));
-    return str;
+  else {
+    std::cout << "tokenizer error: " << tokens.error() << "\n\n";
+    return 1;
   }
 
-  auto split(std::string line) {
-    std::vector<std::string> words;
-    std::stringstream ss(line);
-    std::string word;
-    while (ss >> word)
-      words.push_back(word);
-    return words;
-  }
+  std::cout << '\n';
+  return 0;
+}
 
-  std::string dir = "examples/lang/";
+auto readFile(std::string filename) -> std::string {
+  std::ifstream file(filename);
+  if (!file.is_open())
+    std::cout << "cannot open: " << filename << '\n';
+  file.seekg(0, file.end);
+  std::string str;
+  str.resize(file.tellg());
+  file.seekg(file.beg);
+  file.read(&str[0], size(str));
+  return str;
+}
 
-  auto importWords(bnf::Specification & spec) {
-    std::set<std::string> properNouns = {"I"};
+auto split(std::string line) {
+  std::vector<std::string> words;
+  std::stringstream ss(line);
+  std::string word;
+  while (ss >> word)
+    words.push_back(word);
+  return words;
+}
 
-    auto import = [&](auto filename) {
-      std::string type;
-      bnf::forEachLine(readFile(dir + filename), [&](auto w) {
-        if (auto p = w.find_first_of(' '); p != w.npos)
-          w = w.substr(0, p);
-        if (w[0] == '#')
-          type = w.substr(1);
-        else {
-          spec[type] >= w;
-          if (type == "NPR" || type == "NPRS")
-            properNouns.insert(w);
-        }
-      });
-    };
+std::string dir = "examples/lang/";
 
-    import("noun.txt");
-    import("adj.txt");
-    import("adv.txt");
-    import("p.txt");
+auto importWords(bnf::Specification& spec) {
+  std::set<std::string> properNouns = {"I"};
 
-    bnf::forEachLine(readFile(dir + "verb.txt"), [&](auto w) {
-      auto words = split(w.substr(0, w.find('/')));
-      auto tags = split(w.substr(w.find('/') + 1));
-      for (auto tag : tags) {
-        if (size(words) == 8) {
-          spec["VB~" + tag] >= words[0];
-          spec["VBP~" + tag] >= words[1];
-          spec["VBP~" + tag] >= words[2];
-          spec["VBP~" + tag] >= words[3];
-          spec["VBD~" + tag] >= words[4];
-          spec["VBD~" + tag] >= words[5];
-          spec["VVN~" + tag] >= words[6];
-          spec["VAG~" + tag] >= words[7];
-        } else {
-          spec["VB~" + tag] >= words[0];
-          spec["VBP~" + tag] >= words[0];
-          spec["VBP~" + tag] >= words[1];
-          spec["VBD~" + tag] >= words[2];
-          spec["VVN~" + tag] >= words[3];
-          spec["VAG~" + tag] >= words[4];
-        }
+  auto import = [&](auto filename) {
+    std::string type;
+    bnf::forEachLine(readFile(dir + filename), [&](auto w) {
+      if (auto p = w.find_first_of(' '); p != w.npos)
+        w = w.substr(0, p);
+      if (w[0] == '#')
+        type = w.substr(1);
+      else {
+        spec[type] >= w;
+        if (type == "NPR" || type == "NPRS")
+          properNouns.insert(w);
       }
     });
+  };
 
-    return properNouns;
-  }
+  import("noun.txt");
+  import("adj.txt");
+  import("adv.txt");
+  import("p.txt");
 
-  int main() {
-    auto spec = bnf::parseSpec(readFile(dir + "grammar.txt"));
-    auto properNouns = importWords(spec);
-
-    auto terminals = bnf::autoTerminals(spec);
-    terminals[" "] = "";
-
-    int ret = 0;
-
-    bnf::forEachLine(readFile(dir + "sentences.txt"), [&](auto line) {
-      if (line[0] != '#') {
-        std::stringstream ss(line);
-        std::string word;
-        line.clear();
-        while (ss >> word) {
-          if (properNouns.find(word) == end(properNouns))
-            for (auto& l : word)
-              if (std::isalpha(l))
-                l = std::tolower(l);
-          line += word + " ";
-        }
-        line.pop_back();
-
-        ret += parse(line, terminals, spec);
+  bnf::forEachLine(readFile(dir + "verb.txt"), [&](auto w) {
+    auto words = split(w.substr(0, w.find('/')));
+    auto tags = split(w.substr(w.find('/') + 1));
+    for (auto tag : tags) {
+      if (size(words) == 8) {
+        spec["VB~" + tag] >= words[0];
+        spec["VBP~" + tag] >= words[1];
+        spec["VBP~" + tag] >= words[2];
+        spec["VBP~" + tag] >= words[3];
+        spec["VBD~" + tag] >= words[4];
+        spec["VBD~" + tag] >= words[5];
+        spec["VVN~" + tag] >= words[6];
+        spec["VAG~" + tag] >= words[7];
+      } else {
+        spec["VB~" + tag] >= words[0];
+        spec["VBP~" + tag] >= words[0];
+        spec["VBP~" + tag] >= words[1];
+        spec["VBD~" + tag] >= words[2];
+        spec["VVN~" + tag] >= words[3];
+        spec["VAG~" + tag] >= words[4];
       }
-    });
-
-    if (ret){
-      std::cout << "\n" << ret << " sentences failed to be parsed\n";
-      abort();
     }
+  });
 
-    return ret;
+  return properNouns;
+}
+
+int main() {
+  auto spec = bnf::parseSpec(readFile(dir + "grammar.txt"));
+  auto properNouns = importWords(spec);
+
+  auto terminals = bnf::autoTerminals(spec);
+  terminals[" "] = "";
+
+  int ret = 0;
+
+  bnf::forEachLine(readFile(dir + "sentences.txt"), [&](auto line) {
+    if (line[0] != '#') {
+      std::stringstream ss(line);
+      std::string word;
+      line.clear();
+      while (ss >> word) {
+        if (properNouns.find(word) == end(properNouns))
+          for (auto& l : word)
+            if (std::isalpha(l))
+              l = std::tolower(l);
+        line += word + " ";
+      }
+      line.pop_back();
+
+      ret += parse(line, terminals, spec);
+    }
+  });
+
+  if (ret) {
+    std::cout << "\n" << ret << " sentences failed to be parsed\n";
+    abort();
   }
+
+  return ret;
+}

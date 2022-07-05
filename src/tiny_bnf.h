@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <string>
 #include <variant>
@@ -85,6 +86,12 @@ struct OneOrMore {
 };
 
 template <typename T>
+struct Requires {
+  T ref;
+  std::vector<std::string> attribs;
+};
+
+template <typename T>
 struct Deref {
   T ref;
 };
@@ -105,34 +112,34 @@ struct Expr {
   Expr(detail::OneOrMore oom) : symbol(oom.symbol), oneOrMore(true) {
   }
   template <typename T>
+  Expr(detail::Requires<T> req) : Expr(req.attribs) {
+    attribs = req.attribs;
+  }
+  template <typename T>
   Expr(detail::Deref<T> deref) : Expr(deref.ref) {
     deref = true;
   }
 
   std::string symbol;
+  std::vector<std::string> attribs;
   bool optional = false;
   bool arbitrary = false;
   bool oneOrMore = false;
   bool deref = false;
 };
 
-inline bool operator==(const Expr &a, const Expr &b) {
-  return a.symbol == b.symbol && a.optional == b.optional && a.arbitrary == b.arbitrary && a.oneOrMore == b.oneOrMore;
-}
-
 struct Rule {
   std::string symbol;
   std::vector<Expr> expr;
   size_t idx = 0;
+  std::set<std::string> attributes = {};
   bool intermediate = false;
   bool alias = false;
 };
 
-inline bool operator==(const Rule &a, const Rule &b) {
-  return a.symbol == b.symbol && a.expr == b.expr;
-}
-inline bool operator!=(const Rule &a, const Rule &b) {
-  return !(a == b);
+inline void mergeAttributes(Rule &dst, const Rule &ref) {
+  for (auto &a : ref.attributes)
+    dst.attributes.insert(ref.symbol + "." + a);
 }
 
 inline auto opt(std::string symbol) {
@@ -149,86 +156,31 @@ inline auto deref(T x) {
   return detail::Deref{x};
 }
 
+template <typename T>
+inline auto require(T x, std::vector<std::string> attribs) {
+  return detail::Requires{x, attribs};
+}
+
 struct Specification {
   auto operator[](std::string symbol) -> Specification & {
     return addSymbol(symbol);
   }
 
-  auto operator>=(std::string symbol) -> Specification & {
-    return addExpr(symbol);
-  }
-  auto operator,(std::string symbol) -> Specification & {
-    return addExpr(symbol);
-  }
-  auto operator|(std::string symbol) -> Specification & {
-    addAlternative();
-    return addExpr(symbol);
-  }
-  auto operator==(std::string symbol) -> Specification & {
-    setIntermediate();
-    return addExpr(symbol);
-  }
-
-  auto operator>=(detail::Optional symbol) -> Specification & {
-    return addExpr(symbol);
-  }
-  auto operator,(detail::Optional symbol) -> Specification & {
-    return addExpr(symbol);
-  }
-  auto operator|(detail::Optional symbol) -> Specification & {
-    addAlternative();
-    return addExpr(symbol);
-  }
-  auto operator==(detail::Optional symbol) -> Specification & {
-    setIntermediate();
-    return addExpr(symbol);
-  }
-
-  auto operator>=(detail::Arbitrary symbol) -> Specification & {
-    return addExpr(symbol);
-  }
-  auto operator,(detail::Arbitrary symbol) -> Specification & {
-    return addExpr(symbol);
-  }
-  auto operator|(detail::Arbitrary symbol) -> Specification & {
-    addAlternative();
-    return addExpr(symbol);
-  }
-  auto operator==(detail::Arbitrary symbol) -> Specification & {
-    setIntermediate();
-    return addExpr(symbol);
-  }
-
-  auto operator>=(detail::OneOrMore symbol) -> Specification & {
-    return addExpr(symbol);
-  }
-  auto operator,(detail::OneOrMore symbol) -> Specification & {
-    return addExpr(symbol);
-  }
-  auto operator|(detail::OneOrMore symbol) -> Specification & {
-    addAlternative();
-    return addExpr(symbol);
-  }
-  auto operator==(detail::OneOrMore symbol) -> Specification & {
-    setIntermediate();
-    return addExpr(symbol);
-  }
-
   template <typename T>
-  auto operator>=(detail::Deref<T> symbol) -> Specification & {
+  auto operator>=(T symbol) -> Specification & {
     return addExpr(symbol);
   }
   template <typename T>
-  auto operator,(detail::Deref<T> symbol) -> Specification & {
+  auto operator,(T symbol) -> Specification & {
     return addExpr(symbol);
   }
   template <typename T>
-  auto operator|(detail::Deref<T> symbol) -> Specification & {
+  auto operator|(T symbol) -> Specification & {
     addAlternative();
     return addExpr(symbol);
   }
   template <typename T>
-  auto operator==(detail::Deref<T> symbol) -> Specification & {
+  auto operator==(T symbol) -> Specification & {
     setIntermediate();
     return addExpr(symbol);
   }
@@ -272,6 +224,20 @@ struct Specification {
     p = ps.back();
     ps.pop_back();
     return *this;
+  }
+
+  template <typename... As>
+  auto addAttributes(std::string attrib, As... rest) -> Specification & {
+    activeRule().attributes.insert(attrib);
+    if constexpr (sizeof...(As))
+      return addAttributes(rest...);
+    else
+      return *this;
+  }
+
+  template <typename... As>
+  auto operator()(As... attribs) -> Specification & {
+    return addAttributes(attribs...);
   }
 
   void setIntermediate() {

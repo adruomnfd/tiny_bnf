@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <regex>
 
 namespace tiny_bnf {
 
@@ -75,10 +76,13 @@ auto isComplete(const State &state) {
   return state.p == size(state.rule.expr);
 }
 
-auto match(const State &state, const std::string &c) {
+auto match(const State &state, const Rule &r) {
   if (isComplete(state))
     return false;
-  return state.rule.expr[state.p].symbol == c;
+  for (auto &a : state.rule.expr[state.p].attribs)
+    if (r.attributes.find(a) == end(r.attributes))
+      return false;
+  return state.rule.expr[state.p].symbol == r.symbol;
 }
 
 auto predict(StateSets &stateSets, size_t k, size_t i, const Expr &next,
@@ -105,7 +109,7 @@ auto scan(StateSets &stateSets, size_t k, const Expr &next, const State &s) {
 auto complete(StateSets &stateSets, size_t k, const State &s) {
   auto sz = size(stateSets[s.i]);
   for (size_t j = s.start; j < sz; ++j)
-    if (match(stateSets[s.i][j], s.rule.symbol)) {
+    if (match(stateSets[s.i][j], s.rule)) {
       auto sc = stateSets[s.i][j];
 
       if (sc.rule.expr[sc.p].oneOrMore) {
@@ -119,6 +123,8 @@ auto complete(StateSets &stateSets, size_t k, const State &s) {
       } else {
         sc.node.children.push_back(s.node);
       }
+
+      mergeAttributes(sc.rule, s.rule);
 
       if (!sc.rule.expr[sc.p].arbitrary)
         sc.p += 1;
@@ -255,7 +261,7 @@ auto generateImpl(const Generator &generator, const Node &node)
   return build(build, node);
 }
 
-auto splitBySpaceAndParenthesis(std::string_view text) {
+auto split(std::string_view text) {
   std::vector<std::string> parts;
   bool first = true;
 
@@ -278,6 +284,14 @@ auto splitBySpaceAndParenthesis(std::string_view text) {
       parts.push_back(":");
     else if (text[i] == '|')
       parts.push_back("|");
+    else if (text[i] == '-' && i + 1 < size(text) && text[i + 1] == '>')
+      (parts.push_back("->"), ++i);
+    else if (text[i] == '[')
+      parts.push_back("[");
+    else if (text[i] == ']')
+      parts.push_back("]");
+    else if (text[i] == ',')
+      parts.push_back(",");
     else if (text[i] == ' ')
       ;
     else {
@@ -297,17 +311,57 @@ auto splitBySpaceAndParenthesis(std::string_view text) {
 auto parseSpec(std::string text) -> Specification {
   Specification spec;
 
-  forEachLine(text, [&](std::string line) {
+  forEachLine(text, [&](auto line) {
     if (line[0] == '#')
       return;
-    auto parts = splitBySpaceAndParenthesis(line);
+    auto parts = split(line);
+    if (size(parts) < 7)
+      return;
+
+    if (parts[3] == "[") {
+      auto name = parts[2];
+      std::map<std::string, std::string> map;
+      std::pair<decltype(map)::iterator, bool> it;
+      bool lhs = true;
+      for (size_t i = 4; i < size(parts) - 1; ++i) {
+        if (lhs) {
+          it = map.insert(std::pair{parts[i], ""});
+          lhs = false;
+        } else if (parts[i] == ",")
+          lhs = true;
+        else if (parts[i] != "->")
+          it.first->second += parts[i] + " ";
+      }
+
+      forEachLine(text, [&](auto line2) {
+        if (line2.substr(0, line2.find(' ')) == name) {
+          for (auto pair : map)
+            line2 = std::regex_replace(line2, std::regex(pair.first), pair.second.substr(0, size(pair.second) - 1));
+          line2.erase(0, line2.find(' '));
+          line2 = parts[0] + line2;
+          text += "\n" + line2;
+        }
+      });
+    }
+  });
+
+  // std::cout << text << "\n";
+
+  forEachLine(text, [&](auto line) {
+    if (line[0] == '#')
+      return;
+    auto parts = split(line);
 
     if (size(parts) < 3 || (parts[1] != ">=" && parts[1] != "==")) {
       std::cout << "invalid line: " << line << '\n';
       return;
     }
 
+    if (size(parts) >= 7 && parts[3] == "[")
+      return;
+
     spec.addSymbol(parts[0]);
+
     if (parts[1] == ">=" || parts[1] == "==") {
       if (parts[1] == "==")
         spec.setIntermediate();

@@ -1,0 +1,54 @@
+about the first week in June
+NP[ADVP:ADV:about D:the NUM:first N:week PP[P:in NP:NPR:June]]
+
+the young printer <apos>s apprentice
+NP[NP-GENV[D:the ADJP:ADJ:young N:printer GENM:<apos>s] N:apprentice]
+
+the computer skills course
+NP[D:the N:computer NS:skills N:course]
+
+a murmuring voice
+NP[D:a IP-PPL:VAG~I:murmuring N:voice]
+
+validated data
+NP[IP-PPL:VVN~Tn:validated N:data]
+
+some testable factual basis
+NP[D:some ADJP:ADJ:testable ADJP:ADJ:factual N:basis]
+
+operator handling information
+NP[N:operator IP-PPL[VAG~Tn:handling NP-OB1:N:information]]
+
+such a way that information can be retrieved
+NP[ADJP:ADJ:such D:a N:way CP-THT:IP-SUB[C:that NP-SBJ:N:information MD:can VB~cat_Ve:be IP-PPL-CAT:VVN~Tn:retrieved]]
+
+my wish to meet Samuel Beckett
+NP[NP-GENV:PRO:my N:wish IP-INF[TO:to VB~Tn:meet NP-OB1[NPR:Samuel NPR:Beckett]]]
+
+everything else
+NP[Q:everything ADVP:ADV:else]
+
+a grant in aid program
+NP[D:a N:grant PP[P:in NP[N:aid N:program]]]
+
+total secondary school spending in Britain
+NP[ADJP:ADJ:total ADJP:ADJ:secondary N:school N:spending PP[P:in NP:NPR:Britain]]
+
+the 2 <hyphen> score <hyphen> year milestone
+NP[D:the NML[NML[NUM:2 <hyphen> N:score] <hyphen> N:year] N:milestone]
+
+each one
+NP[Q:each N:one]
+
+state highway department public relations director
+NP[N:state N:highway N:department NML[ADJP:ADJ:public NS:relations] N:director]
+
+A_ , B_ , and C_ or D_
+NP:NML[NP:NPR:A_ , CONJP:NP:NPR:B_ , CONJP[CONJ:and NP:NML[NP:NPR:C_ CONJP[CONJ:or NP:NPR:D_]]]]
+
+much of the skills
+NP[Q:much PP[P:of NP[D:the NS:skills]]]
+
+the environmental issues and problems that face us
+IP-MAT[NP-SBJ[D:the ADJP:ADJ:environmental NML[NP:NS:issues CONJP[CONJ:and NP:NS:problems]] RPRO:that] VBP~Tn:face NP-OB1:PRO:us]
+

@@ -3,57 +3,34 @@ Sentence >= NP | ADJP | ADVP | PP
 
 # =====CLAUSES=====
 # =================
-IP-MAT >= NP-SBJ V~Ln NP-PRD2
-IP-MAT >= NP-SBJ V~La ADJP-PRD2
-IP-MAT >= NP-SBJ V~I
-IP-MAT >= NP-SBJ V~Tn NP-OB1
-IP-MAT >= NP-SBJ V~Cn.a NP-OB1 ADJP-PRD
-IP-MAT >= NP-SBJ V~Dn.n NP-OB2 NP-OB1
-IP-MAT >= NP-SBJ V~cat_Ve IP-PPL-CAT.Ve
-IP-MAT >= NP-SBJ V~cat_Vg IP-PPL-CAT.Vg
+IP >= NP-SBJ verb~Ln NP-PRD2
+IP >= NP-SBJ verb~La ADJP-PRD2
+IP >= NP-SBJ verb~I
+IP >= NP-SBJ verb~Tn NP-OB1
+IP >= NP-SBJ verb~Cn.a NP-OB1 ADJP-PRD
+IP >= NP-SBJ verb~Dn.n NP-OB2 NP-OB1
+IP >= NP-SBJ verb~cat_Ve IP-PPL-CAT.Ve
+IP >= NP-SBJ verb~cat_Vg IP-PPL-CAT.Vg
 
-IP-PPL.Vg >= VAG~Ln NP-PRD2 
-IP-PPL.Vg >= VAG~La ADJP-PRD2 
-IP-PPL.Vg >= VAG~I 
-IP-PPL.Vg >= VAG~Tn NP-OB1 
-IP-PPL.Vg >= VAG~Cn.a NP-OB1 ADJP-PRD 
-IP-PPL.Vg >= VAG~Dn.n NP-OB2 NP-OB1
-
-# perfect construction
-IP-PPL.Ve >= VVN~Ln NP-PRD2 
-IP-PPL.Ve >= VVN~La ADJP-PRD2 
-IP-PPL.Ve >= VVN~I 
-IP-PPL.Ve >= VVN~Tn NP-OB1 
-IP-PPL.Ve >= VVN~Cn.a NP-OB1 ADJP-PRD 
-IP-PPL.Ve >= VVN~Dn.n NP-OB2 NP-OB1
+IP-MAT    >= IP[verb -> V, NP-SBJ -> NP-SBJ]
+IP-PPL.Vg >= IP[verb -> VAG, NP-SBJ -> NP-SBJ?]
+IP-PPL.Ve >= IP[verb -> VVN, NP-SBJ -> NP-SBJ?]
+IP-INF.Vt >= IP[verb -> TO VB, NP-SBJ -> NP-SBJ?]
+IP-INF.Vi >= IP[verb -> VB, NP-SBJ -> NP-SBJ?]
 
 # passive voice
 IP-PPL.Ve >= VVN~Tn
 IP-PPL.Ve >= VVN~Cn.a ADJP-PRD
 IP-PPL.Ve >= VVN~Dn.n NP-OB2
 
-IP-INF.Vt >= TO VB~Ln NP-PRD2 
-IP-INF.Vt >= TO VB~La ADJP-PRD2 
-IP-INF.Vt >= TO VB~I 
-IP-INF.Vt >= TO VB~Tn NP-OB1 
-IP-INF.Vt >= TO VB~Cn.a NP-OB1 ADJP-PRD 
-IP-INF.Vt >= TO VB~Dn.n NP-OB2 NP-OB1
-
-IP-INF.Vi >= VB~Ln NP-PRD2 
-IP-INF.Vi >= VB~La ADJP-PRD2 
-IP-INF.Vi >= VB~I 
-IP-INF.Vi >= VB~Tn NP-OB1 
-IP-INF.Vi >= VB~Cn.a NP-OB1 ADJP-PRD
-IP-INF.Vi >= VB~Dn.n NP-OB2 NP-OB1
-
-V~Ln     == VBP~Ln | VBD~Ln | MD VB~Ln
-V~La     == VBP~La | VBD~La | MD VB~La
-V~I      == VBP~I | VBD~I | MD VB~I
-V~Tn     == VBP~Tn | VBD~Tn | MD VB~Tn
-V~Cn.a   == VBP~Cn.a | VBD~Cn.a | MD VB~Cn.n
-V~Dn.n   == VBP~Dn.n | VBD~Dn.n | MD VB~Dn.n
-V~cat_Ve == VBP~cat_Ve | VBD~cat_Ve | MD VB~cat_Ve
-V~cat_Vg == VBP~cat_Vg | VBD~cat_Vg | MD VB~cat_Vg
+V~Ln     == VBP~Ln | VBD~Ln | MD NEG? VB~Ln
+V~La     == VBP~La | VBD~La | MD NEG? VB~La
+V~I      == VBP~I | VBD~I | MD NEG? VB~I
+V~Tn     == VBP~Tn | VBD~Tn | MD NEG? VB~Tn
+V~Cn.a   == VBP~Cn.a | VBD~Cn.a | MD NEG? VB~Cn.n
+V~Dn.n   == VBP~Dn.n | VBD~Dn.n | MD NEG? VB~Dn.n
+V~cat_Ve == VBP~cat_Ve | VBD~cat_Ve | MD NEG? VB~cat_Ve
+V~cat_Vg == VBP~cat_Vg | VBD~cat_Vg | MD NEG? VB~cat_Vg
 
 IP-PPL-CAT.Vg >= IP-PPL.Vg&
 IP-PPL-CAT.Ve >= IP-PPL.Ve&
