@@ -9,3 +9,8 @@ handle handles handled handled handling / Tn
 retrieve retrieves retrieved retrieved retrieving / Tn
 meet meets met met meeting / Tn
 face faces faced faced facing / Tn
+buy buys bought bought buying / Tn
+store stores stored stored storing / Tn
+place places placed placed placing / Tn
+do does did done doing / Tn
+exist exists existed existed existing / I

@@ -1,31 +1,23 @@
+#include <tiny_bnf.h>
+
 #include <iostream>
 #include <variant>
-
-#include <tiny_bnf.h>
 
 template <typename T>
 struct Indirect {
   Indirect() = default;
-  Indirect(T x) : x(std::make_shared<T>(x)) {
-  }
+  Indirect(T x) : x(std::make_shared<T>(x)) {}
 
-  auto& operator*() const {
-    return *x;
-  }
-  auto operator->() const {
-    return x;
-  }
-  explicit operator bool() const {
-    return (bool)x;
-  }
+  auto& operator*() const { return *x; }
+  auto operator->() const { return x; }
+  explicit operator bool() const { return (bool)x; }
 
   std::shared_ptr<T> x;
 };
 
 template <typename... Ts>
 struct Overloaded : Ts... {
-  Overloaded(Ts... xs) : Ts(xs)... {
-  }
+  Overloaded(Ts... xs) : Ts(xs)... {}
   using Ts::operator()...;
 };
 
@@ -40,24 +32,22 @@ struct Seven {};
 struct Eight {};
 struct Nine {};
 
-using Digit = std::variant<Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine>;
+using Digit =
+    std::variant<Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine>;
 int eval(Digit d) {
-  return std::visit(
-      Overloaded{[](Zero) { return 0; }, [](One) { return 1; }, [](Two) { return 2; }, [](Three) { return 3; },
-                 [](Four) { return 4; }, [](Five) { return 5; }, [](Six) { return 6; }, [](Seven) { return 7; },
-                 [](Eight) { return 8; }, [](Nine) { return 9; }},
-      d);
+  return std::visit(Overloaded{[](Zero) { return 0; }, [](One) { return 1; },
+                               [](Two) { return 2; }, [](Three) { return 3; },
+                               [](Four) { return 4; }, [](Five) { return 5; },
+                               [](Six) { return 6; }, [](Seven) { return 7; },
+                               [](Eight) { return 8; }, [](Nine) { return 9; }},
+                    d);
 }
 
 struct Integer {
-  Integer(Digit d) : d(d) {
-  }
-  Integer(Integer n, Digit d) : n(n), d(d) {
-  }
+  Integer(Digit d) : d(d) {}
+  Integer(Integer n, Digit d) : n(n), d(d) {}
 
-  int eval() const {
-    return (n ? n->eval() * 10 : 0) + ::eval(d);
-  }
+  int eval() const { return (n ? n->eval() * 10 : 0) + ::eval(d); }
 
   Indirect<Integer> n;
   Digit d;
@@ -66,15 +56,12 @@ struct Integer {
 struct Dot {};
 
 struct FloatingPoint {
-  FloatingPoint(Integer n) : n(n) {
-  }
-  FloatingPoint(Integer n, Dot, Integer f) : n(n), f(f) {
-  }
+  FloatingPoint(Integer n) : n(n) {}
+  FloatingPoint(Integer n, Dot, Integer f) : n(n), f(f) {}
 
   float eval() const {
     float nf = f ? f->eval() : 0;
-    while (nf >= 1.0f)
-      nf /= 10;
+    while (nf >= 1.0f) nf /= 10;
     return n.eval() + nf;
   }
 
@@ -103,18 +90,20 @@ struct Factor {
 };
 
 struct Term {
-  Term(Factor factor, Multiply, Term term) : op(Op::Mul), factor(factor), term(term) {
-  }
-  Term(Factor factor, Divide, Term term) : op(Op::Div), factor(factor), term(term) {
-  }
-  Term(Factor factor) : op(Op::Identity), factor(factor) {
-  }
+  Term(Factor factor, Multiply, Term term)
+      : op(Op::Mul), factor(factor), term(term) {}
+  Term(Factor factor, Divide, Term term)
+      : op(Op::Div), factor(factor), term(term) {}
+  Term(Factor factor) : op(Op::Identity), factor(factor) {}
 
   float eval() const {
     switch (op) {
-      case Op::Mul: return factor->eval() * term->eval();
-      case Op::Div: return factor->eval() / term->eval();
-      default: return factor->eval();
+      case Op::Mul:
+        return factor->eval() * term->eval();
+      case Op::Div:
+        return factor->eval() / term->eval();
+      default:
+        return factor->eval();
     }
   }
 
@@ -124,18 +113,18 @@ struct Term {
 };
 
 struct Expr {
-  Expr(Term term, Add, Expr expr) : op(Op::Add), term(term), expr(expr) {
-  }
-  Expr(Term term, Subtract, Expr expr) : op(Op::Sub), term(term), expr(expr) {
-  }
-  Expr(Term term) : op(Op::Identity), term(term) {
-  }
+  Expr(Term term, Add, Expr expr) : op(Op::Add), term(term), expr(expr) {}
+  Expr(Term term, Subtract, Expr expr) : op(Op::Sub), term(term), expr(expr) {}
+  Expr(Term term) : op(Op::Identity), term(term) {}
 
   float eval() const {
     switch (op) {
-      case Op::Add: return term->eval() + expr->eval();
-      case Op::Sub: return term->eval() - expr->eval();
-      default: return term->eval();
+      case Op::Add:
+        return term->eval() + expr->eval();
+      case Op::Sub:
+        return term->eval() - expr->eval();
+      default:
+        return term->eval();
     }
   }
 
@@ -144,21 +133,14 @@ struct Expr {
   Indirect<Expr> expr;
 };
 
-Factor::Factor(LeftParenthesis, Expr expr, RightParenthesis) : expr(expr) {
-}
-Factor::Factor(Number n) : n(n) {
-}
-float Factor::eval() const {
-  return expr ? expr->eval() : n->eval();
-}
+Factor::Factor(LeftParenthesis, Expr expr, RightParenthesis) : expr(expr) {}
+Factor::Factor(Number n) : n(n) {}
+float Factor::eval() const { return expr ? expr->eval() : n->eval(); }
 
 struct Stmt {
-  Stmt(Expr expr) : expr(expr) {
-  }
+  Stmt(Expr expr) : expr(expr) {}
 
-  float eval() const {
-    return expr.eval();
-  }
+  float eval() const { return expr.eval(); }
 
   Expr expr;
 };
@@ -194,13 +176,18 @@ auto buildParser() {
   using tiny_bnf::Ctor;
   tiny_bnf::Generator gen;
   gen.bind<Stmt>("stmt", Ctor<Expr>{});
-  gen.bind<Expr>("expr", Ctor<Term, Add, Expr>{}, Ctor<Term, Subtract, Expr>{}, Ctor<Term>{});
-  gen.bind<Term>("term", Ctor<Factor, Multiply, Term>{}, Ctor<Factor, Divide, Term>{}, Ctor<Factor>{});
-  gen.bind<Factor>("factor", Ctor<LeftParenthesis, Expr, RightParenthesis>{}, Ctor<Number>{});
+  gen.bind<Expr>("expr", Ctor<Term, Add, Expr>{}, Ctor<Term, Subtract, Expr>{},
+                 Ctor<Term>{});
+  gen.bind<Term>("term", Ctor<Factor, Multiply, Term>{},
+                 Ctor<Factor, Divide, Term>{}, Ctor<Factor>{});
+  gen.bind<Factor>("factor", Ctor<LeftParenthesis, Expr, RightParenthesis>{},
+                   Ctor<Number>{});
   gen.bind<Integer>("integer", Ctor<Digit>{}, Ctor<Integer, Digit>{});
-  gen.bind<FloatingPoint>("number", Ctor<Integer>{}, Ctor<Integer, Dot, Integer>{});
-  gen.bind<Digit>("digit", Ctor<Zero>{}, Ctor<One>{}, Ctor<Two>{}, Ctor<Three>{}, Ctor<Four>{}, Ctor<Five>{},
-                  Ctor<Six>{}, Ctor<Seven>{}, Ctor<Eight>{}, Ctor<Nine>{});
+  gen.bind<FloatingPoint>("number", Ctor<Integer>{},
+                          Ctor<Integer, Dot, Integer>{});
+  gen.bind<Digit>("digit", Ctor<Zero>{}, Ctor<One>{}, Ctor<Two>{},
+                  Ctor<Three>{}, Ctor<Four>{}, Ctor<Five>{}, Ctor<Six>{},
+                  Ctor<Seven>{}, Ctor<Eight>{}, Ctor<Nine>{});
   gen.bind<Zero>("0");
   gen.bind<One>("1");
   gen.bind<Two>("2");
@@ -223,7 +210,9 @@ auto buildParser() {
 }
 
 tiny_bnf::Expected<float> eval(
-    std::string input, const std::tuple<tiny_bnf::Terminals, tiny_bnf::Specification, tiny_bnf::Generator>& parser) {
+    std::string input,
+    const std::tuple<tiny_bnf::Terminals, tiny_bnf::Specification,
+                     tiny_bnf::Generator>& parser) {
   auto& [terminals, spec, gen] = parser;
 
   auto tokens = tiny_bnf::tokenize(terminals, input);
@@ -232,12 +221,10 @@ tiny_bnf::Expected<float> eval(
 
   auto tree = tiny_bnf::parse(spec, *tokens, tiny_bnf::ParserType::Earley);
 
-  if (!tree)
-    return tiny_bnf::Error<>("Failed to parse: " + tree.error());
+  if (!tree) return tiny_bnf::Error<>("Failed to parse: " + tree.error());
 
   auto stmt = tiny_bnf::generate<Stmt>(gen, (*tree)[0]);
-  if (!stmt)
-    return tiny_bnf::Error<>("Failed to generate: " + stmt.error());
+  if (!stmt) return tiny_bnf::Error<>("Failed to generate: " + stmt.error());
 
   return stmt->eval();
 }

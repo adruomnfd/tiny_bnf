@@ -8,8 +8,22 @@ total
 secondary
 public
 environmental
+good
+severe
+important
+rude
+easy
+free
+able
+certain
+unaware
+unproductive
+most
+difficult
+wide
 
 #ADJR
+more
 
 #ADJS
 

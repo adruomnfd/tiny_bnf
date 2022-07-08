@@ -1,6 +1,7 @@
 #include <tiny_bnf.h>
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <map>
 #include <regex>
@@ -9,13 +10,12 @@ namespace tiny_bnf {
 
 template <typename It, typename T, typename U, typename F>
 auto accumulateN(It it, T n, U init, F f) {
-  for (T i = 0; i < n; ++i)
-    init = f(init, it++);
+  for (T i = 0; i < n; ++i) init = f(init, it++);
   return init;
 }
 
 inline auto isWord(char c) -> bool {
-  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '-';
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
 
 auto autoTerminals(const Specification &spec) -> Terminals {
@@ -23,32 +23,31 @@ auto autoTerminals(const Specification &spec) -> Terminals {
   std::map<std::string, bool> ts;
 
   for (const auto &rule : spec)
-    for (const auto &expr : rule.expr)
-      ts[expr.symbol] = true;
+    for (const auto &expr : rule.expr) ts[expr.symbol] = true;
 
-  for (const auto &rule : spec)
-    ts[rule.symbol] = false;
+  for (const auto &rule : spec) ts[rule.symbol] = false;
 
   for (const auto &terminal : ts)
-    if (terminal.second)
-      terminals[terminal.first];
+    if (terminal.second) terminals[terminal.first];
 
   return terminals;
 }
 
-auto tokenize(const Terminals &terminals, std::string_view input, bool delimit) -> Expected<Tokens> {
+auto tokenize(const Terminals &terminals, std::string_view input, bool delimit)
+    -> Expected<Tokens> {
   Tokens tokens;
   const auto &map = terminals.expr2Sym;
 
-  auto n = accumulateN(size_t{1}, std::size(input), size_t{0}, [&](auto a, auto b) {
-    if (!delimit || b == size(input) || !isWord(input[b]) || !isWord(input[a]))
-      if (auto it = map.find(input.substr(a, b - a)); it != std::end(map)) {
-        if (it->second != "")
-          tokens.push_back(it->second);
-        return b;
-      }
-    return a;
-  });
+  auto n =
+      accumulateN(size_t{1}, std::size(input), size_t{0}, [&](auto a, auto b) {
+        if (!delimit || b == size(input) || !isWord(input[b]) ||
+            !isWord(input[a]))
+          if (auto it = map.find(input.substr(a, b - a)); it != std::end(map)) {
+            if (it->second != "") tokens.push_back(it->second);
+            return b;
+          }
+        return a;
+      });
 
   if (n == std::size(input))
     return tokens;
@@ -59,8 +58,7 @@ auto tokenize(const Terminals &terminals, std::string_view input, bool delimit) 
 template <typename F>
 void traverseNode(Node n, F f) {
   f(n.symbol);
-  for (auto &r : n.children)
-    traverseNode(r, f);
+  for (auto &r : n.children) traverseNode(r, f);
 }
 
 struct State {
@@ -72,24 +70,20 @@ struct State {
 };
 using StateSets = std::vector<std::vector<State>>;
 
-auto isComplete(const State &state) {
-  return state.p == size(state.rule.expr);
-}
+auto isComplete(const State &state) { return state.p == size(state.rule.expr); }
 
 auto match(const State &state, const Rule &r) {
-  if (isComplete(state))
-    return false;
+  if (isComplete(state)) return false;
   for (auto &a : state.rule.expr[state.p].attribs)
-    if (r.attributes.find(a) == end(r.attributes))
-      return false;
+    if (r.attributes.find(a) == end(r.attributes)) return false;
   return state.rule.expr[state.p].symbol == r.symbol;
 }
 
 auto predict(StateSets &stateSets, size_t k, size_t i, const Expr &next,
-             const std::map<std::string, std::vector<Rule>> &rules, std::vector<bool> &addedRules) {
+             const std::map<std::string, std::vector<Rule>> &rules,
+             std::vector<bool> &addedRules) {
   auto it = rules.find(next.symbol);
-  if (it == end(rules))
-    return false;
+  if (it == end(rules)) return false;
   for (auto &rule : it->second)
     if (!addedRules[rule.idx]) {
       stateSets[k].push_back(State{k, 0, rule, {rule.symbol, {}}, i});
@@ -98,58 +92,58 @@ auto predict(StateSets &stateSets, size_t k, size_t i, const Expr &next,
   return true;
 }
 
-auto scan(StateSets &stateSets, size_t k, const Expr &next, const State &s) {
-  auto s2 = s;
-  if (!s2.rule.expr[s2.p].arbitrary)
-    s2.p += 1;
-  s2.node.children.push_back(Node{next.symbol, {}});
-  stateSets[k + 1].push_back(s2);
+auto scan(StateSets &stateSets, size_t k, const Expr &next, State s) {
+  if (!s.rule.expr[s.p].arbitrary) s.p += 1;
+  s.node.children.push_back(Node{next.symbol, {}});
+  stateSets[k + 1].push_back(s);
 }
 
-auto complete(StateSets &stateSets, size_t k, const State &s) {
-  auto sz = size(stateSets[s.i]);
-  for (size_t j = s.start; j < sz; ++j)
-    if (match(stateSets[s.i][j], s.rule)) {
-      auto sc = stateSets[s.i][j];
+auto complete(StateSets &stateSets, size_t k, size_t i) {
+  auto sz = size(stateSets[stateSets[k][i].i]);
+  for (size_t j = stateSets[k][i].start; j < sz; ++j)
+    if (match(stateSets[stateSets[k][i].i][j], stateSets[k][i].rule)) {
+      auto sc = stateSets[stateSets[k][i].i][j];
 
       if (sc.rule.expr[sc.p].oneOrMore) {
         sc.rule.expr[sc.p].oneOrMore = false;
         sc.rule.expr[sc.p].arbitrary = true;
       }
 
-      if (s.rule.intermediate || sc.rule.alias || sc.rule.expr[sc.p].deref) {
-        for (auto n : s.node.children)
+      if (stateSets[k][i].rule.intermediate || sc.rule.alias ||
+          sc.rule.expr[sc.p].deref) {
+        for (auto &n : stateSets[k][i].node.children)
           sc.node.children.push_back(n);
       } else {
-        sc.node.children.push_back(s.node);
+        sc.node.children.push_back(stateSets[k][i].node);
       }
 
-      mergeAttributes(sc.rule, s.rule);
+      mergeAttributes(sc.rule, stateSets[k][i].rule);
 
-      if (!sc.rule.expr[sc.p].arbitrary)
-        sc.p += 1;
+      if (!sc.rule.expr[sc.p].arbitrary) sc.p += 1;
 
-      stateSets[k].push_back(sc);
+      stateSets[k].push_back(std::move(sc));
     }
 }
 
-auto parseEarley(Specification spec, Tokens tokens) -> Expected<std::vector<Node>> {
+auto parseEarley(Specification spec, Tokens tokens)
+    -> Expected<std::vector<Node>> {
+  //auto t0 = std::chrono::high_resolution_clock::now();
   auto stateSets = StateSets(size(tokens) + 1);
-  for (size_t i = 0; i != size(spec.rules) && spec.rules[i].symbol == spec.rules[0].symbol; ++i)
-    stateSets[0].push_back(State{0, 0, spec.rules[i], Node{spec.rules[i].symbol, {}}});
+  for (size_t i = 0;
+       i != size(spec.rules) && spec.rules[i].symbol == spec.rules[0].symbol;
+       ++i)
+    stateSets[0].push_back(
+        State{0, 0, spec.rules[i], Node{spec.rules[i].symbol, {}}});
 
   std::map<std::string, std::vector<Rule>> rules;
-  for (auto &rule : spec)
-    rules[rule.symbol].push_back(rule);
+  for (auto &rule : spec) rules[rule.symbol].push_back(rule);
+  std::vector<bool> addedRules(size(spec.rules));
 
   for (size_t k = 0; k <= size(tokens); ++k) {
-    std::vector<bool> addedRules(size(spec.rules));
-
     for (size_t i = 0; i < size(stateSets[k]); ++i) {
-      auto s = stateSets[k][i];
       if (0) {
-        if (i == 0)
-          std::cout << "\n";
+        auto &s = stateSets[k][i];
+        if (i == 0) std::cout << "\n";
         std::cout << s.i << ' ' << s.rule.symbol << " → ";
         for (size_t j = 0; j < s.p; j++)
           std::cout << s.rule.expr[j].symbol << ' ';
@@ -159,7 +153,8 @@ auto parseEarley(Specification spec, Tokens tokens) -> Expected<std::vector<Node
         std::cout << '\n';
       }
 
-      if (!isComplete(s)) {
+      if (!isComplete(stateSets[k][i])) {
+        auto s = stateSets[k][i];
         const auto &next = s.rule.expr[s.p];
 
         // prediction
@@ -171,52 +166,56 @@ auto parseEarley(Specification spec, Tokens tokens) -> Expected<std::vector<Node
 
         if (next.optional || next.arbitrary) {
           s.p += 1;
-          stateSets[k].push_back(s);
+          stateSets[k].push_back(std::move(s));
         }
 
       } else {
         // completion
-        complete(stateSets, k, s);
-        addedRules[s.rule.idx] = false;
+        complete(stateSets, k, i);
+        addedRules[stateSets[k][i].rule.idx] = false;
       }
     }
+
+    addedRules.clear();
+    addedRules.resize(size(spec.rules));
   }
 
   std::vector<Node> nodes;
 
   for (auto &s : stateSets.back())
     if (s.i == 0 && s.node.symbol == spec.rules.front().symbol)
-      if (isComplete(s) && std::find(begin(nodes), end(nodes), s.node) == end(nodes))
+      if (isComplete(s) &&
+          std::find(begin(nodes), end(nodes), s.node) == end(nodes))
         nodes.push_back(s.node);
 
-  if (size(nodes) == 0)
-    return Error<>("Unable to parse input");
+  //auto t1 = std::chrono::high_resolution_clock::now();
+  //std::cout << std::chrono::duration<float>(t1 - t0).count() << "\n";
+
+  if (size(nodes) == 0) return Error<>("Unable to parse input");
 
   return nodes;
 }
 
-auto parse(const Specification &spec, Tokens tokens, ParserType parserType) -> Expected<std::vector<Node>> {
+auto parse(const Specification &spec, Tokens tokens, ParserType parserType)
+    -> Expected<std::vector<Node>> {
   if (0)
     for (auto r : spec) {
       std::cout << r.symbol << " ::= ";
       for (auto e : r.expr) {
         std::cout << e.symbol;
-        if (e.optional)
-          std::cout << "?";
-        if (e.arbitrary)
-          std::cout << "*";
-        if (e.oneOrMore)
-          std::cout << "+";
-        if (e.deref)
-          std::cout << "&";
+        if (e.optional) std::cout << "?";
+        if (e.arbitrary) std::cout << "*";
+        if (e.oneOrMore) std::cout << "+";
+        if (e.deref) std::cout << "&";
         std::cout << " ";
       }
-      std::cout << r.idx << '\n';
     }
 
   switch (parserType) {
-    case ParserType::Earley: return parseEarley(spec, std::move(tokens));
-    default: return Error<>("Invalid parser type");
+    case ParserType::Earley:
+      return parseEarley(spec, std::move(tokens));
+    default:
+      return Error<>("Invalid parser type");
   }
 }
 
@@ -226,8 +225,7 @@ auto generateImpl(const Generator &generator, const Node &node)
 
   auto build = [&](auto &build, Node node) -> R {
     auto modelOpt = generator.findModel(node.symbol);
-    if (!modelOpt)
-      return Error<>("Cannot find model: " + node.symbol);
+    if (!modelOpt) return Error<>("Cannot find model: " + node.symbol);
     auto model = *modelOpt;
 
     std::vector<AnnotatedPtr> args;
@@ -250,9 +248,13 @@ auto generateImpl(const Generator &generator, const Node &node)
     }};
 
     if (model->useStringToConstruct && size(node.children) != 1)
-      return Error<>("Model binded with _UseString_ tag requires one child in corresponding node");
+      return Error<>(
+          "Model binded with _UseString_ tag requires one child in "
+          "corresponding node");
 
-    if (auto ptr = !model->useStringToConstruct ? model->construct(args) : model->construct(node.children[0].symbol))
+    if (auto ptr = !model->useStringToConstruct
+                       ? model->construct(args)
+                       : model->construct(node.children[0].symbol))
       return std::pair{*ptr, model};
     else
       return Error<>("Cannot construct type: " + node.symbol);
@@ -290,19 +292,17 @@ auto split(std::string_view text) {
       parts.push_back("[");
     else if (text[i] == ']')
       parts.push_back("]");
-    else if (text[i] == ',')
-      parts.push_back(",");
+    else if (text[i] == ',') 
+    parts.push_back(",");
     else if (text[i] == ' ')
       ;
     else {
       nt = false;
-      if (first)
-        parts.push_back("");
+      if (first) parts.push_back("");
       parts.back().push_back(text[i]);
       first = false;
     }
-    if (nt)
-      first = true;
+    if (nt) first = true;
   }
 
   return parts;
@@ -312,11 +312,9 @@ auto parseSpec(std::string text) -> Specification {
   Specification spec;
 
   forEachLine(text, [&](auto line) {
-    if (line[0] == '#')
-      return;
+    if (line[0] == '#') return;
     auto parts = split(line);
-    if (size(parts) < 7)
-      return;
+    if (size(parts) < 7) return;
 
     if (parts[3] == "[") {
       auto name = parts[2];
@@ -336,7 +334,9 @@ auto parseSpec(std::string text) -> Specification {
       forEachLine(text, [&](auto line2) {
         if (line2.substr(0, line2.find(' ')) == name) {
           for (auto pair : map)
-            line2 = std::regex_replace(line2, std::regex(pair.first), pair.second.substr(0, size(pair.second) - 1));
+            line2 = std::regex_replace(
+                line2, std::regex(pair.first),
+                pair.second.substr(0, size(pair.second) - 1));
           line2.erase(0, line2.find(' '));
           line2 = parts[0] + line2;
           text += "\n" + line2;
@@ -348,8 +348,7 @@ auto parseSpec(std::string text) -> Specification {
   // std::cout << text << "\n";
 
   forEachLine(text, [&](auto line) {
-    if (line[0] == '#')
-      return;
+    if (line[0] == '#') return;
     auto parts = split(line);
 
     if (size(parts) < 3 || (parts[1] != ">=" && parts[1] != "==")) {
@@ -357,14 +356,12 @@ auto parseSpec(std::string text) -> Specification {
       return;
     }
 
-    if (size(parts) >= 7 && parts[3] == "[")
-      return;
+    if (size(parts) >= 7 && parts[3] == "[") return;
 
     spec.addSymbol(parts[0]);
 
     if (parts[1] == ">=" || parts[1] == "==") {
-      if (parts[1] == "==")
-        spec.setIntermediate();
+      if (parts[1] == "==") spec.setIntermediate();
 
       for (size_t i = 2; i < size(parts); ++i) {
         if (parts[i] == "|")

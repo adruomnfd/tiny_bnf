@@ -3,15 +3,16 @@
 int main() {
   auto parser = buildParser();
 
-#define CHECK_ANSWER(x)                                                                            \
-  if (auto val = eval(#x, parser)) {                                                               \
-    if (std::abs(*val - (x)) < 1e-4)                                                               \
-      std::cout << #x << " = " << *val << '\n';                                                    \
-    else                                                                                           \
-      std::cout << "Answer to [" #x "] is not correct: " << *val << ", should be " << (x) << '\n'; \
-  } else {                                                                                         \
-    std::cout << "When processing [" #x "]: " << val.error() << '\n';                              \
-    exit(1);                                                                                       \
+#define CHECK_ANSWER(x)                                               \
+  if (auto val = eval(#x, parser)) {                                  \
+    if (std::abs(*val - (x)) < 1e-4)                                  \
+      std::cout << #x << " = " << *val << '\n';                       \
+    else                                                              \
+      std::cout << "Answer to [" #x "] is not correct: " << *val      \
+                << ", should be " << (x) << '\n';                     \
+  } else {                                                            \
+    std::cout << "When processing [" #x "]: " << val.error() << '\n'; \
+    exit(1);                                                          \
   }
 
   CHECK_ANSWER(7);

@@ -1,8 +1,25 @@
+#TODO: conjunctive adverbs e.g. only also as_well. And location of occurence
+
 #ADV
 about
 easily
 else
 today
+very
+only
+as_well
+also
+perhaps
+even
+more
+consequently
+so
+enough
+actually
+most
+importantly
+slowly
+carefully
 
 #ADVR
 

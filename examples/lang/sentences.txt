@@ -1,18 +1,49 @@
+
+# [noun phrases]
 about the first week in June
-the young printer <apos>s apprentice
+the young printer 's apprentice
 the computer skills course
 A murmuring voice
 validated data
 some testable factual basis
 operator handling information
+much of the skills
 such a way that information can be retrieved
 my wish to meet Samuel Beckett
 everything else
 a grant in aid program
 total secondary school spending in Britain
-the 2 <hyphen> score <hyphen> year milestone
+the 2 -score - year milestone
 each one
 state highway department public relations director
-A_ , B_ , and C_ or D_
-much of the skills
+
+A_, B_, and C_ or D_
+not only A_ but also B_
+not only A_ but B_ as_well
+A_ and, perhaps, even B_
+
 the environmental issues and problems that face us
+the book that he bought
+the bookstore in which he bought the book
+the bookstore where he bought the book
+the box in which volume the water is stored
+the box at whose top a book is placed
+
+314 boxes
+
+# [adjective phrases]
+so important
+easy enough
+very very rude
+free from difficulty
+able to do that
+unaware that certain information actually exists
+for the most part unproductive
+not only difficult but also important
+wide and in the dirt
+
+# [adverb phrases]
+not only slowly but also carefully
+
+# [prepostion phrases]
+not only in the city but also in the countryside

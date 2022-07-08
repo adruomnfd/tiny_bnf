@@ -1,8 +1,1 @@
 BasedOnStyle: Google
-PointerBindsToType: true
-AllowShortFunctionsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
-AllowShortLambdasOnASingleLine: true
-AllowShortCaseLabelsOnASingleLine: true
-ColumnLimit: 120

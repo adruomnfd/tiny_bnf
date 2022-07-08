@@ -3,20 +3,21 @@
 #include <fstream>
 #include <iostream>
 #include <set>
+#include <chrono>
 
 namespace bnf = tiny_bnf;
 
-void printTree(bnf::Node node, bool isRoot = true) {
+void printTree(const bnf::Node& node, bool isRoot = true) {
   if (!isRoot) {
     size_t p = node.symbol.find_first_of('.');
-    std::cout << node.symbol.substr(0, p == std::string::npos ? size(node.symbol) : p);
+    std::cout << node.symbol.substr(
+        0, p == std::string::npos ? size(node.symbol) : p);
   }
 
   if (size(node.children)) {
     if (!isRoot) {
       if (size(node.children) != 1) {
-        if (!isRoot)
-          std::cout << '[';
+        if (!isRoot) std::cout << '[';
       } else {
         std::cout << ':';
       }
@@ -24,18 +25,16 @@ void printTree(bnf::Node node, bool isRoot = true) {
 
     for (size_t i = 0; i < size(node.children); ++i) {
       printTree(node.children[i], false);
-      if (i != size(node.children) - 1)
-        std::cout << ' ';
+      if (i != size(node.children) - 1) std::cout << ' ';
     }
 
     if (!isRoot)
       if (size(node.children) != 1)
-        if (!isRoot)
-          std::cout << ']';
+        if (!isRoot) std::cout << ']';
   }
 }
 
-int parse(std::string text, bnf::Terminals terminals, bnf::Specification spec) {
+int parse(std::string text, const bnf::Terminals& terminals, const bnf::Specification& spec) {
   std::cout << text << '\n';
   if (auto tokens = bnf::tokenize(terminals, text, true))
     if (auto trees = bnf::parse(spec, *tokens)) {
@@ -43,13 +42,13 @@ int parse(std::string text, bnf::Terminals terminals, bnf::Specification spec) {
       float depth = 1e+20f;
       for (size_t i = 0; i < size(*trees); ++i) {
         float d = 0;
-        bnf::traverse((*trees)[i], [&](auto&, float z, float w) { d += z + w * 0.001f; });
+        bnf::traverse((*trees)[i],
+                      [&](auto&, float z, float w) { d += z + w * 0.001f; });
         if (d < depth) {
           shallowest.clear();
           depth = d;
         }
-        if (d == depth)
-          shallowest.push_back(i);
+        if (d == depth) shallowest.push_back(i);
       }
       for (auto i : shallowest) {
         printTree((*trees)[i]);
@@ -70,8 +69,7 @@ int parse(std::string text, bnf::Terminals terminals, bnf::Specification spec) {
 
 auto readFile(std::string filename) -> std::string {
   std::ifstream file(filename);
-  if (!file.is_open())
-    std::cout << "cannot open: " << filename << '\n';
+  if (!file.is_open()) std::cout << "cannot open: " << filename << '\n';
   file.seekg(0, file.end);
   std::string str;
   str.resize(file.tellg());
@@ -84,8 +82,7 @@ auto split(std::string line) {
   std::vector<std::string> words;
   std::stringstream ss(line);
   std::string word;
-  while (ss >> word)
-    words.push_back(word);
+  while (ss >> word) words.push_back(word);
   return words;
 }
 
@@ -97,14 +94,12 @@ auto importWords(bnf::Specification& spec) {
   auto import = [&](auto filename) {
     std::string type;
     bnf::forEachLine(readFile(dir + filename), [&](auto w) {
-      if (auto p = w.find_first_of(' '); p != w.npos)
-        w = w.substr(0, p);
+      if (auto p = w.find_first_of(' '); p != w.npos) w = w.substr(0, p);
       if (w[0] == '#')
         type = w.substr(1);
       else {
         spec[type] >= w;
-        if (type == "NPR" || type == "NPRS")
-          properNouns.insert(w);
+        if (type == "NPR" || type == "NPRS") properNouns.insert(w);
       }
     });
   };
@@ -147,25 +142,34 @@ int main() {
 
   auto terminals = bnf::autoTerminals(spec);
   terminals[" "] = "";
+  terminals["-"] = "-";
 
   int ret = 0;
 
   bnf::forEachLine(readFile(dir + "sentences.txt"), [&](auto line) {
+    //auto t0 = std::chrono::high_resolution_clock::now();
     if (line[0] != '#') {
       std::stringstream ss(line);
       std::string word;
       line.clear();
       while (ss >> word) {
+        bool trailingComma = false;
+        if (word.back() == ',') {
+          trailingComma = true;
+          word = word.substr(0, size(word) - 1);
+        }
         if (properNouns.find(word) == end(properNouns))
           for (auto& l : word)
-            if (std::isalpha(l))
-              l = std::tolower(l);
+            if (std::isalpha(l)) l = std::tolower(l);
+        if (trailingComma) word += ",";
         line += word + " ";
       }
       line.pop_back();
 
       ret += parse(line, terminals, spec);
     }
+    //auto t1 = std::chrono::high_resolution_clock::now();
+    //std::cout << std::chrono::duration<float>(t1 - t0).count() << "\n";
   });
 
   if (ret) {

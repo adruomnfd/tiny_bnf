@@ -4,3 +4,6 @@ on
 at
 of
 by
+for
+from
+through

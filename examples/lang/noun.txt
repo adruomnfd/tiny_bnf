@@ -3,6 +3,10 @@ a
 an
 the
 some
+this
+that
+those
+these
 
 #Q
 no
@@ -54,7 +58,20 @@ that
 which
 who
 whom
+
+#RPRO.gen
 whose
+
+#RD
+which
+what
+qhatever
+
+#RADV
+where
+how
+when
+whereby
 
 #WPRO
 what
@@ -62,7 +79,7 @@ who
 whom
 whose
 
-#Q.N
+#Q.indefinite
 everyone
 everybody
 everything
@@ -70,11 +87,11 @@ none
 nobody
 nothing
 
-#Q.N.pr
+#Q.pr
 much
 a_lot
 
-#D.N
+#D.indefinite
 someone
 somebody
 something
@@ -83,7 +100,7 @@ anybody
 anything
 another
 
-#D.N.n
+#D.demonstrative
 this
 that
 those
@@ -93,16 +110,53 @@ these
 first
 second
 third
+
 one
 two
 three
 four
 five
+six
+seven
+eight
+nine
+ten
+eleven
+twelve
+thirteen
+fourteen
+fifteen
+sixteen
+sevteen
+eighteen
+nineteen
+
+twenty
+thirty
+fourty
+fifty
+sixty
+seventy
+eighty
+ninety
+
+hundred
+thousand
+million
+billion
+trillion
+
+#digit
+0
 1
 2
 3
 4
 5
+6
+7
+8
+9
 
 #NPR
 June
@@ -154,10 +208,28 @@ hall
 dining
 room
 sitting
+book
+bookstore
+water
+volume
+box
+top
+problem
+flooding
+degradation
+soil
+erosion
+deforestation
+a_bit
+difficulty
+part
+city
+countryside
+dirt
 
 #NS
 skills
 relations
 issues
 problems
-
+boxes

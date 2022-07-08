@@ -1,11 +1,11 @@
-Sentence >= IP-MAT PU?
+Sentence >= IP-MAT .?
 Sentence >= NP | ADJP | ADVP | PP
 
 # =====CLAUSES=====
 # =================
-IP >= NP-SBJ verb~Ln NP-PRD2
-IP >= NP-SBJ verb~La ADJP-PRD2
-IP >= NP-SBJ verb~I
+IP >= NP-SBJ verb~Ln ADVP? NP-PRD2
+IP >= NP-SBJ verb~La ADVP? ADJP-PRD2
+IP >= NP-SBJ ADVP? verb~I
 IP >= NP-SBJ verb~Tn NP-OB1
 IP >= NP-SBJ verb~Cn.a NP-OB1 ADJP-PRD
 IP >= NP-SBJ verb~Dn.n NP-OB2 NP-OB1
@@ -23,6 +23,13 @@ IP-PPL.Ve >= VVN~Tn
 IP-PPL.Ve >= VVN~Cn.a ADJP-PRD
 IP-PPL.Ve >= VVN~Dn.n NP-OB2
 
+IP-REL >= IP[verb -> V, NP-SBJ -> NP-SBJ.rel]
+IP-REL >= IP[verb -> V, NP-SBJ -> PP.rel NP-SBJ]
+IP-REL >= IP[verb -> V, NP-SBJ -> RADV NP-SBJ]
+IP-REL >= NP-PRD2.rel NP-SBJ V~Ln
+IP-REL >= NP-OB1.rel NP-SBJ V~Tn
+
+# present tense verb combination
 V~Ln     == VBP~Ln | VBD~Ln | MD NEG? VB~Ln
 V~La     == VBP~La | VBD~La | MD NEG? VB~La
 V~I      == VBP~I | VBD~I | MD NEG? VB~I
@@ -32,6 +39,7 @@ V~Dn.n   == VBP~Dn.n | VBD~Dn.n | MD NEG? VB~Dn.n
 V~cat_Ve == VBP~cat_Ve | VBD~cat_Ve | MD NEG? VB~cat_Ve
 V~cat_Vg == VBP~cat_Vg | VBD~cat_Vg | MD NEG? VB~cat_Vg
 
+# tags for non-finite clause
 IP-PPL-CAT.Vg >= IP-PPL.Vg&
 IP-PPL-CAT.Ve >= IP-PPL.Ve&
 IP-PPL == IP-PPL.Ve | IP-PPL.Vg
@@ -42,72 +50,100 @@ IP-SUB   >= C? IP-MAT&
 
 CP-THT.c >= IP-SUB.c
 CP-THT   >= IP-SUB
-IP-REL >= IP-MAT&
 
 # =====CLAUSE CONSTITUENTS=====
 # =============================
-NP-SBJ  >= NP&
-NP-OB1  >= NP&
-NP-OB2  >= NP&
-NP-PRD2 >= NP&
+NP-SBJ    >= NP&
+NP-OB1    >= NP&
+NP-OB2    >= NP&
+NP-PRD2   >= NP&
+NP-PRD    >= NP&
 ADJP-PRD2 >= ADJP&
 ADJP-PRD  >= ADJP&
+
+NP-SBJ.rel  >= NP.rel&
+NP-OB1.rel  >= NP.rel&
+NP-OB2.rel  >= NP.rel&
+NP-PRD2.rel >= NP.rel&
 
 MD  >= can | could | may | might | will | would | shall | should
 EX  >= there
 NEG >= not
 TO  >= to
 CQ  >= whether
-
-DO  >= do
-DOP >= do does
-DOD >= did
-DON >= done
-DAG >= doing
-
 # =====PHRASES=====
 # =================
 NP >= NP.prehead NP.head NP.posthead
-NP >= (D.N | Q.N) ADVP? ADJP? NP.posthead
-NP >= Q.N.pr PP
+NP >= (D.indefinite | Q.indefinite) ADVP? ADJP? NP.posthead
+NP >= Q.pr PP
+NP >= D.demonstrative
+NP.rel >= RPRO | NP.prehead.rel NP.head NP.posthead
 
-ADJP >= ADVP? ADJP.head&
-ADVP >= ADVP? ADVP.head&
-PP   >= PP.head& NP
+ADJP >= ADJP.prehead ADJP.head ADJP.posthead | AML.adj
+
+ADVP >= ADVP? ADVP.head& | AML.adv
+ADVP.single >= ADV
+
+PP   >= PP.head& NP | PML&
+PP.rel >= PP.head& NP.rel
 
 
 # =====PHRASE CONSTITUENTS=====
 # =============================
 
 # ===NP===
-NP.head == PRO | PNX | NPR | NPRS | RPRO | WPRO | N | NS | NML
+NP.head == PRO | PNX | NPR | NPRS | N | NS | NML
  
-#             [about]  [my]      [all | five]  [such  a  | those | my]        [four]  [great]  [sleeping]      [internet] 
-NP.prehead == ADVP?    NP-GENV?  (Q   | NUM)?  (ADJP? D? | D.N.n? | NP-GENV?)  NUM?    ADJP*    IP-PPL.single?  NP.nominal*
+#             [about]  [all | five]  [such  a  | my]        [four]  [great]  [sleeping]      [internet] 
+NP.prehead == ADVP?    (Q   | NUM)?  (ADJP? D? | NP-GENV?)  NUM?    ADJP*    IP-PPL.single?  NP.nominal*
+
+NP.prehead.rel == ADVP?    (Q   | NUM)?  (ADJP? RD? | NP-GENV.rel?)  NUM?    ADJP*    IP-PPL.single?  NP.nominal*
            
-NP.posthead == PP* (IP-PPL | IP-INF.Vt | CP-THT.c)?
+NP.posthead == PP* (IP-PPL | IP-INF.Vt | CP-THT.c)? IP-REL?
 
 NP.nominal == NPR | NPRS | N | NS | NML
 
 NP-GENV >= NP& GENM | PRO.gen
-GENM >= <apos>s
+NP-GENV.rel >= RPRO.gen
+GENM >= 's
 
-NML >= NP.head PP
-NML >= ADJP NP.head
-NML >= (NUM | NP.nominal) <hyphen> NP.head
+NML >= NML.group& | NML.conj
+NML.group >= NP.head PP
+NML.group >= ADJP NP.head
+NML.group >= NML.conj
+NML.group >= (NUM | NP.nominal) - NP.head
 
-NML >= NP CONJP.c | NP (, CONJP)+ , CONJP.c
-CONJP >= NP
-CONJP.c >= CONJ NP
+NML.conj >= NEG? ADVP? NP CONJP.n.c ADVP? | NP (, CONJP.n)+ , CONJP.n.c
+CONJP.n >= NP
+CONJP.n.c >= CONJ (, ADVP ,)? ADVP? NP
 
 # ===ADJP===
-ADJP.head >= ADJ | ADJR | ADJS
-ADVP.head >= ADV | ADVR | ADVS
+ADJP.head == ADJ | ADJR | ADJS
+ADJP.prehead == ADVP* | NP? | PP?
+ADJP.posthead == ADVP? | PP? | IP-INF.Vt | CP-THT.c
+
+# FIXME: add parentheses at (                )             
+AML.adj >= NEG? ADVP.single? ADJP CONJP.adj.c ADVP.single? | ADJP (, CONJP.adj)+, CONJP.adj.c
+CONJP.adj >= ADJP
+CONJP.adj.c >= CONJ (, ADVP, )? ADVP.single? (ADJP | PP)
+
+# ===ADVP===
+ADVP.head == ADV | ADVR | ADVS
+
+AML.adv >= NEG? ADVP.single? ADVP CONJP.adv.c | ADVP (, CONJP.adv)+, CONJP.adv.c   
+CONJP.adv >= ADVP
+CONJP.adv.c >= CONJ (, ADVP, )? ADVP.single? ADVP
+
+# ===PP===
 PP.head >= P
 
-CONJ >= and | or
+PML >= NEG? ADVP.single? PP CONJP.pp.c ADVP.single? | PP (, CONJP.pp)+, CONJP.adv.c
+CONJP.pp >= PP
+CONJP.pp.c >= CONJ (, ADVP, )? ADVP.single? PP
+
+CONJ >= and | or | but | yet
 C >= that
 P-ROLE >= P&
 P-CONN >= P&
 
-PU >= .
+NUM >= digit+&

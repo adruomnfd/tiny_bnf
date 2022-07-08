@@ -15,11 +15,8 @@ namespace tiny_bnf {
 
 template <typename F>
 struct ScopeGuard {
-  ScopeGuard(F f) : f(std::move(f)) {
-  }
-  ~ScopeGuard() {
-    f();
-  }
+  ScopeGuard(F f) : f(std::move(f)) {}
+  ~ScopeGuard() { f(); }
 
   F f;
 };
@@ -27,40 +24,25 @@ struct ScopeGuard {
 template <typename T = std::string>
 struct Error {
   Error() = default;
-  Error(T value) : value(std::move(value)) {
-  }
+  Error(T value) : value(std::move(value)) {}
 
   T value;
 };
 
 template <typename T, typename ErrorRepr = std::string>
 struct Expected {
-  Expected(T value) : value(std::move(value)) {
-  }
-  Expected(Error<ErrorRepr> error) : value(std::move(error)) {
-  }
+  Expected(T value) : value(std::move(value)) {}
+  Expected(Error<ErrorRepr> error) : value(std::move(error)) {}
 
-  explicit operator bool() const {
-    return value.index() == 0;
-  }
+  explicit operator bool() const { return value.index() == 0; }
 
-  auto operator*() -> T & {
-    return std::get<0>(value);
-  }
-  auto operator*() const -> const T & {
-    return std::get<0>(value);
-  }
+  auto operator*() -> T & { return std::get<0>(value); }
+  auto operator*() const -> const T & { return std::get<0>(value); }
 
-  auto operator->() {
-    return &std::get<0>(value);
-  }
-  auto operator->() const {
-    return &std::get<0>(value);
-  }
+  auto operator->() { return &std::get<0>(value); }
+  auto operator->() const { return &std::get<0>(value); }
 
-  auto error() const {
-    return std::get<1>(value).value;
-  }
+  auto error() const { return std::get<1>(value).value; }
 
  private:
   std::variant<T, Error<ErrorRepr>> value;
@@ -103,14 +85,10 @@ constexpr detail::Leftparenthesis L;
 constexpr detail::RightParenthesis R;
 
 struct Expr {
-  Expr(std::string symbol) : symbol(symbol) {
-  }
-  Expr(detail::Optional opt) : symbol(opt.symbol), optional(true) {
-  }
-  Expr(detail::Arbitrary arb) : symbol(arb.symbol), arbitrary(true) {
-  }
-  Expr(detail::OneOrMore oom) : symbol(oom.symbol), oneOrMore(true) {
-  }
+  Expr(std::string symbol) : symbol(symbol) {}
+  Expr(detail::Optional opt) : symbol(opt.symbol), optional(true) {}
+  Expr(detail::Arbitrary arb) : symbol(arb.symbol), arbitrary(true) {}
+  Expr(detail::OneOrMore oom) : symbol(oom.symbol), oneOrMore(true) {}
   template <typename T>
   Expr(detail::Requires<T> req) : Expr(req.attribs) {
     attribs = req.attribs;
@@ -138,19 +116,12 @@ struct Rule {
 };
 
 inline void mergeAttributes(Rule &dst, const Rule &ref) {
-  for (auto &a : ref.attributes)
-    dst.attributes.insert(ref.symbol + "." + a);
+  for (auto &a : ref.attributes) dst.attributes.insert(ref.symbol + "." + a);
 }
 
-inline auto opt(std::string symbol) {
-  return detail::Optional{symbol};
-}
-inline auto arb(std::string symbol) {
-  return detail::Arbitrary{symbol};
-}
-inline auto oom(std::string symbol) {
-  return detail::OneOrMore{symbol};
-}
+inline auto opt(std::string symbol) { return detail::Optional{symbol}; }
+inline auto arb(std::string symbol) { return detail::Arbitrary{symbol}; }
+inline auto oom(std::string symbol) { return detail::OneOrMore{symbol}; }
 template <typename T>
 inline auto deref(T x) {
   return detail::Deref{x};
@@ -185,13 +156,17 @@ struct Specification {
     return addExpr(symbol);
   }
 
-  auto operator,(detail::Or) -> Specification & {  return addAlternative(); }
-  auto operator,(detail::Leftparenthesis) -> Specification & {  return addLeftParenthesis(); }
-  auto operator,(detail::RightParenthesis) -> Specification & {  return addRightParenthesis(); }
+  auto operator,(detail::Or) -> Specification & { return addAlternative(); }
+  auto operator,(detail::Leftparenthesis) -> Specification & {
+    return addLeftParenthesis();
+  }
+  auto operator,(detail::RightParenthesis) -> Specification & {
+    return addRightParenthesis();
+  }
 
-  auto addSymbol(std::string symbol, bool setAsActive = true) -> Specification & {
-    if (setAsActive)
-      p = size(rules);
+  auto addSymbol(std::string symbol, bool setAsActive = true)
+      -> Specification & {
+    if (setAsActive) p = size(rules);
     rules.push_back(Rule{std::move(symbol), {}, size(rules)});
     return *this;
   }
@@ -218,8 +193,7 @@ struct Specification {
     return *this;
   }
   auto addRightParenthesis() -> Specification & {
-    if (size(ps) == 0)
-      std::cout << "unmatched right parenthesis\n";
+    if (size(ps) == 0) std::cout << "unmatched right parenthesis\n";
     rules[ps.back()].expr.push_back(activeRule().symbol);
     p = ps.back();
     ps.pop_back();
@@ -240,24 +214,14 @@ struct Specification {
     return addAttributes(attribs...);
   }
 
-  void setIntermediate() {
-    activeRule().intermediate = true;
-  }
+  void setIntermediate() { activeRule().intermediate = true; }
 
-  void setAlias() {
-    activeRule().alias = true;
-  }
+  void setAlias() { activeRule().alias = true; }
 
-  auto activeRule() -> Rule & {
-    return rules[p];
-  }
+  auto activeRule() -> Rule & { return rules[p]; }
 
-  auto begin() const {
-    return std::begin(rules);
-  }
-  auto end() const {
-    return std::end(rules);
-  }
+  auto begin() const { return std::begin(rules); }
+  auto end() const { return std::end(rules); }
 
   std::vector<Rule> rules;
   size_t p = 0;
@@ -266,9 +230,7 @@ struct Specification {
 };
 
 struct Terminals {
-  auto operator[](std::string expr) -> auto & {
-    return expr2Sym[expr] = expr;
-  }
+  auto operator[](std::string expr) -> auto & { return expr2Sym[expr] = expr; }
 
   std::map<std::string, std::string, std::less<>> expr2Sym;
 };
@@ -285,19 +247,20 @@ struct Node {
 template <typename F>
 void traverse(Node &node, F f, int depth = 0, int w = 0) {
   f(node, depth, w);
-  for (auto &n : node.children)
-    traverse(n, f, depth + 1, w++);
+  for (auto &n : node.children) traverse(n, f, depth + 1, w++);
 }
 
 inline bool operator==(const Node &a, const Node &b) {
   return a.symbol == b.symbol && a.children == b.children;
 }
 
-Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input, bool delimit = false);
+Expected<Tokens> tokenize(const Terminals &terminals, std::string_view input,
+                          bool delimit = false);
 
 enum ParserType { Earley };
 
-Expected<std::vector<Node>> parse(const Specification &spec, Tokens tokens, ParserType parserType = ParserType::Earley);
+Expected<std::vector<Node>> parse(const Specification &spec, Tokens tokens,
+                                  ParserType parserType = ParserType::Earley);
 
 template <typename... Ts>
 struct Ctor {};
@@ -323,11 +286,11 @@ struct AnnotatedPtr {
 
 struct Generator {
   struct Concept {
-    Concept(bool useString) : useStringToConstruct(useString) {
-    }
+    Concept(bool useString) : useStringToConstruct(useString) {}
 
     virtual ~Concept() = default;
-    virtual auto construct(std::vector<AnnotatedPtr> args) -> std::optional<AnnotatedPtr> = 0;
+    virtual auto construct(std::vector<AnnotatedPtr> args)
+        -> std::optional<AnnotatedPtr> = 0;
     virtual auto construct(std::string expr) -> std::optional<AnnotatedPtr> = 0;
     virtual void destruct(void *obj) const = 0;
 
@@ -338,15 +301,15 @@ struct Generator {
   struct Model : Concept {
     using Concept::Concept;
 
-    auto construct(std::vector<AnnotatedPtr> args) -> std::optional<AnnotatedPtr> override {
-      if constexpr (CheckUseString<Ctors...>::value){
+    auto construct(std::vector<AnnotatedPtr> args)
+        -> std::optional<AnnotatedPtr> override {
+      if constexpr (CheckUseString<Ctors...>::value) {
         return std::nullopt;
-      }
-      else{
-      if constexpr (sizeof...(Ctors) == 0)
-        return AnnotatedPtr{new T(), typeid(T).hash_code()};
-      else
-        return match(args, Ctors{}...);
+      } else {
+        if constexpr (sizeof...(Ctors) == 0)
+          return AnnotatedPtr{new T(), typeid(T).hash_code()};
+        else
+          return match(args, Ctors{}...);
       }
     }
 
@@ -357,19 +320,23 @@ struct Generator {
         return std::nullopt;
     }
 
-    void destruct(void *obj) const override {
-      delete (T *)obj;
-    }
+    void destruct(void *obj) const override { delete (T *)obj; }
 
     template <typename... Args, int... I>
-    static auto integerSeqHelper(std::vector<AnnotatedPtr> args, std::integer_sequence<int, I...>) {
-      return AnnotatedPtr{new T((*(typename NthType<I, Args...>::type *)args[I].ptr)...), typeid(T).hash_code()};
+    static auto integerSeqHelper(std::vector<AnnotatedPtr> args,
+                                 std::integer_sequence<int, I...>) {
+      return AnnotatedPtr{
+          new T((*(typename NthType<I, Args...>::type *)args[I].ptr)...),
+          typeid(T).hash_code()};
     }
 
     template <typename... Args, typename... Cs>
-    auto match(std::vector<AnnotatedPtr> args, Ctor<Args...>, Cs... ctors) -> std::optional<AnnotatedPtr> {
-      if (int i = 0; std::size(args) == sizeof...(Args) && ((args[i++].id == typeid(Args).hash_code()) && ...))
-        return integerSeqHelper<Args...>(args, std::make_integer_sequence<int, sizeof...(Args)>{});
+    auto match(std::vector<AnnotatedPtr> args, Ctor<Args...>, Cs... ctors)
+        -> std::optional<AnnotatedPtr> {
+      if (int i = 0; std::size(args) == sizeof...(Args) &&
+                     ((args[i++].id == typeid(Args).hash_code()) && ...))
+        return integerSeqHelper<Args...>(
+            args, std::make_integer_sequence<int, sizeof...(Args)>{});
       if constexpr (sizeof...(Cs) == 0)
         return std::nullopt;
       else
@@ -398,7 +365,8 @@ struct Generator {
   std::map<std::string, std::unique_ptr<Concept>> models;
 };
 
-Expected<std::pair<AnnotatedPtr, Generator::Concept *>> generateImpl(const Generator &generator, const Node &node);
+Expected<std::pair<AnnotatedPtr, Generator::Concept *>> generateImpl(
+    const Generator &generator, const Node &node);
 
 template <typename T>
 auto generate(const Generator &generator, const Node &node) -> Expected<T> {
@@ -419,8 +387,7 @@ void forEachLine(std::string text, F f) {
   std::stringstream ss(text);
   std::string line;
   while (std::getline(ss, line))
-    if (size(line) && line.find_first_not_of(' ') != line.npos)
-      f(line);
+    if (size(line) && line.find_first_not_of(' ') != line.npos) f(line);
 }
 
 }  // namespace tiny_bnf
