@@ -1,16 +1,27 @@
 Sentence >= IP-MAT .?
+Sentence >= CP-QUE .?
 Sentence >= NP | ADJP | ADVP | PP
 
 # =====CLAUSES=====
 # =================
-IP >= NP-SBJ verb~Ln ADVP? NP-PRD2
-IP >= NP-SBJ verb~La ADVP? ADJP-PRD2
-IP >= NP-SBJ ADVP? verb~I
-IP >= NP-SBJ verb~Tn NP-OB1
-IP >= NP-SBJ verb~Cn.a NP-OB1 ADJP-PRD
-IP >= NP-SBJ verb~Dn.n NP-OB2 NP-OB1
-IP >= NP-SBJ verb~cat_Ve IP-PPL-CAT.Ve
+IP >= NP-SBJ verb~Ln ADVP? NP-PRD2 
+IP >= NP-SBJ verb~La ADVP? ADJP-PRD2 
+IP >= NP-SBJ ADVP? verb~I 
+IP >= NP-SBJ verb~Tn NP-OB1 
+IP >= NP-SBJ verb~Cn.a NP-OB1 ADJP-PRD 
+IP >= NP-SBJ verb~Dn.n NP-OB2 NP-OB1 
+IP >= NP-SBJ verb~cat_Ve IP-PPL-CAT.Ve 
 IP >= NP-SBJ verb~cat_Vg IP-PPL-CAT.Vg
+
+# finite verb inversion
+IP.inv >= VBF~Ln NEG? NP-SBJ NP-PRD2   | MD NEG? NP-SBJ VB~Ln NP-PRD2
+IP.inv >= VBF~La NEG? NP-SBJ ADJP-PRD2 | MD NEG? NP-SBJ VB~La ADJP-PRD2
+IP.inv >= AUX NP-SBJ ADVP? VB~I 
+IP.inv >= AUX NP-SBJ VB~Tn NP-OB1 
+IP.inv >= AUX NP-SBJ VB~Cn.a NP-OB1 ADJP-PRD 
+IP.inv >= AUX NP-SBJ VB~Dn.n NP-OB2 NP-OB1 
+IP.inv >= VBF~cat_Ve NEG? NP-SBJ IP-PPL-CAT.Ve | MD NEG? NP-SBJ VB~cat_Ve IP-PPL-CAT.Ve 
+IP.inv >= VBF~cat_Vg NEG? NP-SBJ IP-PPL-CAT.Vg | MD NEG? NP-SBJ VB~cat_Vg IP-PPL-CAT.Vg
 
 IP-MAT    >= IP[verb -> V, NP-SBJ -> NP-SBJ]
 IP-PPL.Vg >= IP[verb -> VAG, NP-SBJ -> NP-SBJ?]
@@ -23,6 +34,10 @@ IP-PPL.Ve >= VVN~Tn
 IP-PPL.Ve >= VVN~Cn.a ADJP-PRD
 IP-PPL.Ve >= VVN~Dn.n NP-OB2
 
+# interrogative
+CP-QUE >= IP-SUB.que 
+IP-SUB.que >= IP.inv&
+
 IP-REL >= IP[verb -> V, NP-SBJ -> NP-SBJ.rel]
 IP-REL >= IP[verb -> V, NP-SBJ -> PP.rel NP-SBJ]
 IP-REL >= IP[verb -> V, NP-SBJ -> RADV NP-SBJ]
@@ -30,21 +45,22 @@ IP-REL >= NP-PRD2.rel NP-SBJ V~Ln
 IP-REL >= NP-OB1.rel NP-SBJ V~Tn
 
 # present tense verb combination
-V~Ln     == VBP~Ln | VBD~Ln | MD NEG? VB~Ln
-V~La     == VBP~La | VBD~La | MD NEG? VB~La
-V~I      == VBP~I | VBD~I | MD NEG? VB~I
-V~Tn     == VBP~Tn | VBD~Tn | MD NEG? VB~Tn
-V~Cn.a   == VBP~Cn.a | VBD~Cn.a | MD NEG? VB~Cn.n
-V~Dn.n   == VBP~Dn.n | VBD~Dn.n | MD NEG? VB~Dn.n
-V~cat_Ve == VBP~cat_Ve | VBD~cat_Ve | MD NEG? VB~cat_Ve
-V~cat_Vg == VBP~cat_Vg | VBD~cat_Vg | MD NEG? VB~cat_Vg
+V~Ln     == VBF~Ln NEG? | MD NEG? VB~Ln
+V~La     == VBF~La NEG? | MD NEG? VB~La
+V~I      == VBF~I | AUX VB~I
+V~Tn     == VBF~Tn | AUX VB~Tn
+V~Cn.a   == VBF~Cn.a | AUX VB~Cn.n
+V~Dn.n   == VBF~Dn.n | AUX VB~Dn.n
+V~cat_Ve == VBF~cat_Ve | AUX VB~cat_Ve
+V~cat_Vg == VBF~cat_Vg | AUX VB~cat_Vg
 
 # tags for non-finite clause
 IP-PPL-CAT.Vg >= IP-PPL.Vg&
 IP-PPL-CAT.Ve >= IP-PPL.Ve&
-IP-PPL == IP-PPL.Ve | IP-PPL.Vg
+IP-PPL        == IP-PPL.Ve | IP-PPL.Vg
 IP-PPL.single >= VVN~Tn | VAG~I
 
+# that clause
 IP-SUB.c >= C IP-MAT&
 IP-SUB   >= C? IP-MAT&
 
@@ -66,11 +82,27 @@ NP-OB1.rel  >= NP.rel&
 NP-OB2.rel  >= NP.rel&
 NP-PRD2.rel >= NP.rel&
 
+VBF~Ln     == VBP~Ln | VBD~Ln
+VBF~La     == VBP~La | VBD~La
+VBF~I      == VBP~I | VBD~I
+VBF~Tn     == VBP~Tn | VBD~Tn
+VBF~Cn.a   == VBP~Cn.a | VBD~Cn.a
+VBF~Dn.n   == VBP~Dn.n | VBD~Dn.n
+VBF~cat_Ve == VBP~cat_Ve | VBD~cat_Ve
+VBF~cat_Vg == VBP~cat_Vg | VBD~cat_Vg
+
 MD  >= can | could | may | might | will | would | shall | should
 EX  >= there
-NEG >= not
+NEG >= not | n't |  't
 TO  >= to
 CQ  >= whether
+
+DOP >= do | does
+DOD >= did
+DOF == DOP | DOD
+
+AUX == (MD | DOF) NEG?
+
 # =====PHRASES=====
 # =================
 NP >= NP.prehead NP.head NP.posthead

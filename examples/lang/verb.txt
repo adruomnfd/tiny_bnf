@@ -14,3 +14,4 @@ store stores stored stored storing / Tn
 place places placed placed placing / Tn
 do does did done doing / Tn
 exist exists existed existed existing / I
+run runs ran run running / I

@@ -47,3 +47,23 @@ not only slowly but also carefully
 
 # [prepostion phrases]
 not only in the city but also in the countryside
+
+# [finite clause]
+#   [declarative]
+I run
+I can't run
+I can't have run
+I can't have been running
+I can't have been being tired
+
+I do do that
+I do have done that
+I do have been doing that
+
+#    [interrogative]
+Can you run
+Did you run
+Are you outgoing
+Can you be outgoing
+Are you running
+Can you be running
