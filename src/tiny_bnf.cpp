@@ -127,13 +127,12 @@ auto complete(StateSets &stateSets, size_t k, size_t i) {
 
 auto parseEarley(Specification spec, Tokens tokens)
     -> Expected<std::vector<Node>> {
-  //auto t0 = std::chrono::high_resolution_clock::now();
+  // auto t0 = std::chrono::high_resolution_clock::now();
   auto stateSets = StateSets(size(tokens) + 1);
-  for (size_t i = 0;
-       i != size(spec.rules) && spec.rules[i].symbol == spec.rules[0].symbol;
-       ++i)
-    stateSets[0].push_back(
-        State{0, 0, spec.rules[i], Node{spec.rules[i].symbol, {}}});
+  for (size_t i = 0; i != size(spec.rules); ++i)
+    if (spec.rules[i].symbol == spec.rules[0].symbol)
+      stateSets[0].push_back(
+          State{0, 0, spec.rules[i], Node{spec.rules[i].symbol, {}}});
 
   std::map<std::string, std::vector<Rule>> rules;
   for (auto &rule : spec) rules[rule.symbol].push_back(rule);
@@ -141,8 +140,7 @@ auto parseEarley(Specification spec, Tokens tokens)
 
   for (size_t k = 0; k <= size(tokens); ++k) {
     for (size_t i = 0; i < size(stateSets[k]); ++i) {
-      if (0) {
-        auto &s = stateSets[k][i];
+      auto show = [&](auto &s) {
         if (i == 0) std::cout << "\n";
         std::cout << s.i << ' ' << s.rule.symbol << " → ";
         for (size_t j = 0; j < s.p; j++)
@@ -151,7 +149,8 @@ auto parseEarley(Specification spec, Tokens tokens)
         for (size_t j = s.p; j < size(s.rule.expr); j++)
           std::cout << s.rule.expr[j].symbol << ' ';
         std::cout << '\n';
-      }
+      };
+      if (0) show(stateSets[k][i]);
 
       if (!isComplete(stateSets[k][i])) {
         auto s = stateSets[k][i];
@@ -171,6 +170,7 @@ auto parseEarley(Specification spec, Tokens tokens)
 
       } else {
         // completion
+        // show(stateSets[k][i]);
         complete(stateSets, k, i);
         addedRules[stateSets[k][i].rule.idx] = false;
       }
@@ -181,24 +181,28 @@ auto parseEarley(Specification spec, Tokens tokens)
   }
 
   std::vector<Node> nodes;
+  bool any = false;
 
   for (auto &s : stateSets.back())
-    if (s.i == 0 && s.node.symbol == spec.rules.front().symbol)
+    if (s.i == 0 && s.node.symbol == spec.rules.front().symbol) {
       if (isComplete(s) &&
           std::find(begin(nodes), end(nodes), s.node) == end(nodes))
         nodes.push_back(s.node);
+      any = true;
+    }
 
-  //auto t1 = std::chrono::high_resolution_clock::now();
-  //std::cout << std::chrono::duration<float>(t1 - t0).count() << "\n";
+  // auto t1 = std::chrono::high_resolution_clock::now();
+  // std::cout << std::chrono::duration<float>(t1 - t0).count() << "\n";
 
-  if (size(nodes) == 0) return Error<>("Unable to parse input");
+  if (size(nodes) == 0)
+    return Error<>(any ? "top node is not complete" : "no top node is parsed");
 
   return nodes;
 }
 
 auto parse(const Specification &spec, Tokens tokens, ParserType parserType)
     -> Expected<std::vector<Node>> {
-  if (0)
+  if (0) {
     for (auto r : spec) {
       std::cout << r.symbol << " ::= ";
       for (auto e : r.expr) {
@@ -209,7 +213,10 @@ auto parse(const Specification &spec, Tokens tokens, ParserType parserType)
         if (e.deref) std::cout << "&";
         std::cout << " ";
       }
+      std::cout << "\n";
     }
+    abort();
+  }
 
   switch (parserType) {
     case ParserType::Earley:
@@ -286,14 +293,16 @@ auto split(std::string_view text) {
       parts.push_back(":");
     else if (text[i] == '|')
       parts.push_back("|");
+    else if (text[i] == '\\')
+      parts.push_back("\\");
     else if (text[i] == '-' && i + 1 < size(text) && text[i + 1] == '>')
       (parts.push_back("->"), ++i);
     else if (text[i] == '[')
       parts.push_back("[");
     else if (text[i] == ']')
       parts.push_back("]");
-    else if (text[i] == ',') 
-    parts.push_back(",");
+    else if (text[i] == ',')
+      parts.push_back(",");
     else if (text[i] == ' ')
       ;
     else {
@@ -305,30 +314,40 @@ auto split(std::string_view text) {
     if (nt) first = true;
   }
 
+  // for(auto p: parts) std::cout << p << " ";
+  // std::cout << "\n";
+
   return parts;
 }
 
 auto parseSpec(std::string text) -> Specification {
   Specification spec;
 
+  //std::set<std::string> templateRules;
+
   forEachLine(text, [&](auto line) {
     if (line[0] == '#') return;
     auto parts = split(line);
     if (size(parts) < 7) return;
 
-    if (parts[3] == "[") {
-      auto name = parts[2];
+    auto p0 = find(begin(parts), end(parts), "[");
+    auto p1 = find(begin(parts), end(parts), "]");
+
+    if (p0 != end(parts)) {
+      auto name = *(p0 - 1);
+      //templateRules.insert(name);
+
       std::map<std::string, std::string> map;
       std::pair<decltype(map)::iterator, bool> it;
       bool lhs = true;
-      for (size_t i = 4; i < size(parts) - 1; ++i) {
+      for (auto p = p0 + 1; p != p1; ++p) {
         if (lhs) {
-          it = map.insert(std::pair{parts[i], ""});
+          it = map.insert(std::pair{*p, ""});
           lhs = false;
-        } else if (parts[i] == ",")
+        } else if (*p == "," && *(p - 1) != "\\")
           lhs = true;
-        else if (parts[i] != "->")
-          it.first->second += parts[i] + " ";
+        else if (*p != "->" && *p != "\\")
+          it.first->second += *p + " ";
       }
 
       forEachLine(text, [&](auto line2) {
@@ -336,10 +355,13 @@ auto parseSpec(std::string text) -> Specification {
           for (auto pair : map)
             line2 = std::regex_replace(
                 line2, std::regex(pair.first),
-                pair.second.substr(0, size(pair.second) - 1));
-          line2.erase(0, line2.find(' '));
-          line2 = parts[0] + line2;
-          text += "\n" + line2;
+                pair.second.substr(0, size(pair.second) - 1)); 
+          line2.erase(0, std::min(line2.find("=="), line2.find(">=")) + 2);
+
+          text += "\n";
+          for(auto p = begin(parts); p != p0 - 1; ++p) text += *p + " ";
+          text += line2;
+          for(auto p = p1 + 1; p != end(parts); ++p) text += " " + *p;
         }
       });
     }
@@ -356,7 +378,8 @@ auto parseSpec(std::string text) -> Specification {
       return;
     }
 
-    if (size(parts) >= 7 && parts[3] == "[") return;
+    if (find(begin(parts), end(parts), "[") != end(parts)) return;
+    //if (templateRules.find(parts[0]) != end(templateRules)) return;
 
     spec.addSymbol(parts[0]);
 
@@ -364,7 +387,9 @@ auto parseSpec(std::string text) -> Specification {
       if (parts[1] == "==") spec.setIntermediate();
 
       for (size_t i = 2; i < size(parts); ++i) {
-        if (parts[i] == "|")
+        if (parts[i] == "\\")
+          spec >= parts[++i];
+        else if (parts[i] == "|")
           spec.addAlternative();
         else if (parts[i] == "(")
           spec.addLeftParenthesis();

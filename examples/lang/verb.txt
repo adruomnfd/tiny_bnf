@@ -1,5 +1,3 @@
-be am is are was were been being / La Ln cat_Ve cat_Vg
-have has had had having / Tn cat_Ve
 break breaks broke broken breaking / I
 find finds found found finding / Tn Dn.n Cn.a
 code codes coded coded coding / I
@@ -15,3 +13,8 @@ place places placed placed placing / Tn
 do does did done doing / Tn
 exist exists existed existed existing / I
 run runs ran run running / I
+consider considers considered considered considering / Tn
+leave leaves left left leaving / I
+read reads read read reading / Tn
+feel feels felt felt feeling / La
+see sees saw seen seeing / I

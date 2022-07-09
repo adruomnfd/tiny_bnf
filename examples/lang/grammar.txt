@@ -1,58 +1,110 @@
 Sentence >= IP-MAT .?
-Sentence >= CP-QUE .?
+Sentence >= CP-QUE \??
+Sentence >= IP-IMP (. | !)?
 Sentence >= NP | ADJP | ADVP | PP
 
 # =====CLAUSES=====
 # =================
-IP >= NP-SBJ verb~Ln ADVP? NP-PRD2 
-IP >= NP-SBJ verb~La ADVP? ADJP-PRD2 
-IP >= NP-SBJ ADVP? verb~I 
-IP >= NP-SBJ verb~Tn NP-OB1 
-IP >= NP-SBJ verb~Cn.a NP-OB1 ADJP-PRD 
-IP >= NP-SBJ verb~Dn.n NP-OB2 NP-OB1 
-IP >= NP-SBJ verb~cat_Ve IP-PPL-CAT.Ve 
-IP >= NP-SBJ verb~cat_Vg IP-PPL-CAT.Vg
+IP == ADJUNCT NP-SBJ       verb~Ln     ADVP? NP-PRD2                ADJUNCT
+IP == ADJUNCT NP-SBJ       verb~La     ADVP? ADJP-PRD2              ADJUNCT
+IP == ADJUNCT NP-SBJ ADVP? verb~I                                   ADJUNCT
+IP == ADJUNCT NP-SBJ       verb~Tn           NP-OB1                 ADJUNCT
+IP == ADJUNCT NP-SBJ       verb~Cn.a         NP-OB1        ADJP-PRD ADJUNCT
+IP == ADJUNCT NP-SBJ       verb~Dn.n         NP-OB2        NP-OB1   ADJUNCT
+IP == ADJUNCT NP-SBJ       verb~cat_Ve       IP-PPL-CAT.Ve          ADJUNCT
+IP == ADJUNCT NP-SBJ       verb~cat_Vg       IP-PPL-CAT.Vg          ADJUNCT
+IP == ADJUNCT NP-SBJ       be~Ln       ADVP? NP-PRD2                ADJUNCT
+IP == ADJUNCT NP-SBJ       be~La       ADVP? ADJP-PRD2              ADJUNCT
+IP == ADJUNCT NP-SBJ       be~cat_Ve         IP-PPL-CAT.Ve          ADJUNCT
+IP == ADJUNCT NP-SBJ       be~cat_Vg         IP-PPL-CAT.Vg          ADJUNCT
+IP == ADJUNCT NP-SBJ       have~cat_Ve       IP-PPL-CAT.Ve          ADJUNCT
 
-# finite verb inversion
-IP.inv >= VBF~Ln NEG? NP-SBJ NP-PRD2   | MD NEG? NP-SBJ VB~Ln NP-PRD2
-IP.inv >= VBF~La NEG? NP-SBJ ADJP-PRD2 | MD NEG? NP-SBJ VB~La ADJP-PRD2
-IP.inv >= AUX NP-SBJ ADVP? VB~I 
-IP.inv >= AUX NP-SBJ VB~Tn NP-OB1 
-IP.inv >= AUX NP-SBJ VB~Cn.a NP-OB1 ADJP-PRD 
-IP.inv >= AUX NP-SBJ VB~Dn.n NP-OB2 NP-OB1 
-IP.inv >= VBF~cat_Ve NEG? NP-SBJ IP-PPL-CAT.Ve | MD NEG? NP-SBJ VB~cat_Ve IP-PPL-CAT.Ve 
-IP.inv >= VBF~cat_Vg NEG? NP-SBJ IP-PPL-CAT.Vg | MD NEG? NP-SBJ VB~cat_Vg IP-PPL-CAT.Vg
+# subject-verb inversion
+IP.inv == AUX NP-SBJ VB~Ln      NP-PRD2
+IP.inv == AUX NP-SBJ VB~La      ADJP-PRD2
+IP.inv == AUX NP-SBJ VB~I
+IP.inv == AUX NP-SBJ VB~Tn      NP-OB1 
+IP.inv == AUX NP-SBJ VB~Cn.a    NP-OB1        ADJP-PRD
+IP.inv == AUX NP-SBJ VB~Dn.n    NP-OB2        NP-OB1
+IP.inv == AUX NP-SBJ VB~cat_Ve IP-PPL-CAT.Ve 
+IP.inv == AUX NP-SBJ VB~cat_Vg IP-PPL-CAT.Vg
+IP.inv == AUX NP-SBJ BE~Ln     NP-PRD2
+IP.inv == AUX NP-SBJ BE~La     ADJP-PRD2
+IP.inv == AUX NP-SBJ BE~cat_Ve IP-PPL-CAT.Ve
+IP.inv == AUX NP-SBJ BE~cat_Vg IP-PPL-CAT.Vg
+IP.inv == AUX NP-SBJ HV~cat_Ve IP-PPL-CAT.Ve
+IP.inv == BEF~Ln     NP-SBJ    NP-PRD2
+IP.inv == BEF~La     NP-SBJ    ADJP-PRD2
+IP.inv == BEF~cat_Ve NP-SBJ    IP-PPL-CAT.Ve
+IP.inv == BEF~cat_Vg NP-SBJ    IP-PPL-CAT.Vg
+IP.inv == HVF~cat_Ve NP-SBJ    IP-PPL-CAT.Ve
 
-IP-MAT    >= IP[verb -> V, NP-SBJ -> NP-SBJ]
-IP-PPL.Vg >= IP[verb -> VAG, NP-SBJ -> NP-SBJ?]
-IP-PPL.Ve >= IP[verb -> VVN, NP-SBJ -> NP-SBJ?]
-IP-INF.Vt >= IP[verb -> TO VB, NP-SBJ -> NP-SBJ?]
-IP-INF.Vi >= IP[verb -> VB, NP-SBJ -> NP-SBJ?]
+IP-MAT        >= IP[verb -> VBFS , be -> BEFS , have -> HVFS , NP-SBJ -> NP-SBJ]
+IP-MAT        >= ADVP& IP.inv
+IP-MAT        >= IML.mat
+IML.mat.group >= IP-MAT& | ADJUNCT AUX NP-SBJ
+IML.mat       >= IML.mat.group , CONJP.mat
+CONJP.mat     >= CONJ IML.mat.group
+
+IP-IMP.base == IP[verb -> VB   , be -> BE   , have -> HV   , NP-SBJ -> ]
+IP-IMP      >= (NP-VOC ,?)? IP-IML.base (,? NP-BOC)?
+
+IP-PPL.Vg   >= IP[verb -> VAG  , be -> BAG  , have -> HAG  , NP-SBJ -> NP-SBJ?]
+IP-PPL.Ve   >= IP[verb -> VVN  , be -> BEN  , have -> HVN  , NP-SBJ -> NP-SBJ?]
+IP-INF.Vt   >= IP[verb -> TO VB, be -> TO BE, have -> TO HV, NP-SBJ -> NP-SBJ?]
+IP-INF.Vi   >= IP[verb -> VB   , be -> BE   , have -> HV   , NP-SBJ -> NP-SBJ?]
 
 # passive voice
 IP-PPL.Ve >= VVN~Tn
 IP-PPL.Ve >= VVN~Cn.a ADJP-PRD
 IP-PPL.Ve >= VVN~Dn.n NP-OB2
 
-# interrogative
-CP-QUE >= IP-SUB.que 
-IP-SUB.que >= IP.inv&
+# interrogative clause
+CP-QUE   >= IP-SUB.w
 
-IP-REL >= IP[verb -> V, NP-SBJ -> NP-SBJ.rel]
-IP-REL >= IP[verb -> V, NP-SBJ -> PP.rel NP-SBJ]
-IP-REL >= IP[verb -> V, NP-SBJ -> RADV NP-SBJ]
-IP-REL >= NP-PRD2.rel NP-SBJ V~Ln
-IP-REL >= NP-OB1.rel NP-SBJ V~Tn
+#   yes-no question
+IP-SUB.w >= IP.inv
 
-# present tense verb combination
-V~Ln     == VBF~Ln NEG? | MD NEG? VB~Ln
-V~La     == VBF~La NEG? | MD NEG? VB~La
-V~I      == VBF~I | AUX VB~I
-V~Tn     == VBF~Tn | AUX VB~Tn
-V~Cn.a   == VBF~Cn.a | AUX VB~Cn.n
-V~Dn.n   == VBF~Dn.n | AUX VB~Dn.n
-V~cat_Ve == VBF~cat_Ve | AUX VB~cat_Ve
-V~cat_Vg == VBF~cat_Vg | AUX VB~cat_Vg
+#   adverb question
+IP-SUB.w >= WADV IP.inv
+
+#   subject question (excludes be~Ln be~La)
+IP-SUB.w >= IP[verb -> VBFS, be~cat_Ve -> BEFS~cat_Ve, be~cat_Vg -> BEFS~cat_Vg, be~Ln -> __, be~La -> __, have -> HVFS, NP-SBJ -> NP-SBJ.w]
+
+#   object/predicate question
+IP-SUB.w >= NP-PRD2.w AUX    NP-SBJ VB~Ln
+IP-SUB.w >= NP-OB1.w  AUX    NP-SBJ VB~Tn
+IP-SUB.w >= NP-OB1.w  AUX    NP-SBJ VB~Cn.a ADJP-PRD
+IP-SUB.w >= NP-OB1.w  AUX    NP-SBJ VB~Dn.n NP-OB2
+IP-SUB.w >= NP-PRD2.w BEF~Ln NP-SBJ
+IP-SUB.w >= NP-PRD2.w MD NEG? NP-SBJ BE~Ln
+
+# relative clause
+
+#   relative subject/adverb/pp
+IP-REL >= IP[verb -> VBFS, be -> BEFS, have -> HVFS, NP-SBJ -> REL.head]
+
+#    relative object/predicate
+IP-REL >= NP-PRD2.rel NP-SBJ VBFS~Ln
+IP-REL >= NP-OB1.rel  NP-SBJ VBFS~Tn
+IP-REL >= NP-OB1.rel  NP-SBJ VBFS~Cn.a ADJP-PRD
+IP-REL >= NP-OB1.rel  NP-SBJ VBFS~Dn.n NP-OB2
+IP-REL >= NP-PRD2.rel NP-SBJ BEFS~Ln
+
+# finite tense verb sequence
+VBFS~Ln     == VBF~Ln     | AUX VB~Ln
+VBFS~La     == VBF~La     | AUX VB~La
+VBFS~I      == VBF~I      | AUX VB~I
+VBFS~Tn     == VBF~Tn     | AUX VB~Tn
+VBFS~Cn.a   == VBF~Cn.a   | AUX VB~Cn.n
+VBFS~Dn.n   == VBF~Dn.n   | AUX VB~Dn.n
+VBFS~cat_Ve == VBF~cat_Ve | AUX VB~cat_Ve
+VBFS~cat_Vg == VBF~cat_Vg | AUX VB~cat_Vg
+BEFS~Ln     == BEF~Ln     NEG? | MD NEG? BE~Ln
+BEFS~La     == BEF~La     NEG? | MD NEG? BE~La
+BEFS~cat_Ve == BEF~cat_Ve NEG? | MD NEG? BE~cat_Ve
+BEFS~cat_Vg == BEF~cat_Vg NEG? | MD NEG? BE~cat_Vg
+HVFS~cat_Ve == HVF~cat_Ve NEG? | AUX     HV~cat_Ve
 
 # tags for non-finite clause
 IP-PPL-CAT.Vg >= IP-PPL.Vg&
@@ -61,7 +113,7 @@ IP-PPL        == IP-PPL.Ve | IP-PPL.Vg
 IP-PPL.single >= VVN~Tn | VAG~I
 
 # that clause
-IP-SUB.c >= C IP-MAT&
+IP-SUB.c >= C  IP-MAT&
 IP-SUB   >= C? IP-MAT&
 
 CP-THT.c >= IP-SUB.c
@@ -74,6 +126,7 @@ NP-OB1    >= NP&
 NP-OB2    >= NP&
 NP-PRD2   >= NP&
 NP-PRD    >= NP&
+NP-VOC    >= NP&
 ADJP-PRD2 >= ADJP&
 ADJP-PRD  >= ADJP&
 
@@ -81,13 +134,21 @@ NP-SBJ.rel  >= NP.rel&
 NP-OB1.rel  >= NP.rel&
 NP-OB2.rel  >= NP.rel&
 NP-PRD2.rel >= NP.rel&
+REL.head == NP-SBJ.rel | (PP.rel | RADV) NP-SBJ
 
-VBF~Ln     == VBP~Ln | VBD~Ln
-VBF~La     == VBP~La | VBD~La
-VBF~I      == VBP~I | VBD~I
-VBF~Tn     == VBP~Tn | VBD~Tn
-VBF~Cn.a   == VBP~Cn.a | VBD~Cn.a
-VBF~Dn.n   == VBP~Dn.n | VBD~Dn.n
+NP-SBJ.w  >= NP.w&
+NP-OB1.w  >= NP.w&
+NP-OB2.w  >= NP.w&
+NP-PRD2.w >= NP.w&
+
+ADJUNCT == ADVP | PP
+
+VBF~Ln     == VBP~Ln     | VBD~Ln
+VBF~La     == VBP~La     | VBD~La
+VBF~I      == VBP~I      | VBD~I
+VBF~Tn     == VBP~Tn     | VBD~Tn
+VBF~Cn.a   == VBP~Cn.a   | VBD~Cn.a
+VBF~Dn.n   == VBP~Dn.n   | VBD~Dn.n
 VBF~cat_Ve == VBP~cat_Ve | VBD~cat_Ve
 VBF~cat_Vg == VBP~cat_Vg | VBD~cat_Vg
 
@@ -101,6 +162,40 @@ DOP >= do | does
 DOD >= did
 DOF == DOP | DOD
 
+BE  >= be
+BEP >= am | is | are
+BED >= was | were
+BEN >= been
+BAG >= being
+BEF == BEP | BED
+BE~Ln      >= BE&
+BEF~Ln     >= BEF&
+BEN~Ln     >= BEN&
+BAG~Ln     >= BAG&
+BE~La      >= BE&
+BEF~La     >= BEF&
+BEN~La     >= BEN&
+BAG~La     >= BAG&
+BE~cat_Ve  >= BE&
+BEF~cat_Ve >= BEF&
+BEN~cat_Ve >= BEN&
+BAG~cat_Ve >= BAG&
+BE~cat_Vg  >= BE&
+BEF~cat_Vg >= BEF&
+BEN~cat_Vg >= BEN&
+BAG~cat_Vg >= BAG&
+
+HV  >= have
+HVP >= have | has 
+HVD >= had 
+HVN >= had 
+HAG >= having
+HVF == HVP | HVD
+HV~cat_Ve  >= HV&
+HVF~cat_Ve >= HVF&
+HVN~cat_Ve >= HVN&
+HVG~cat_Ve >= HVG&
+
 AUX == (MD | DOF) NEG?
 
 # =====PHRASES=====
@@ -110,72 +205,90 @@ NP >= (D.indefinite | Q.indefinite) ADVP? ADJP? NP.posthead
 NP >= Q.pr PP
 NP >= D.demonstrative
 NP.rel >= RPRO | NP.prehead.rel NP.head NP.posthead
+NP.w   >= WPRO | NP.prehead.w NP.head NP.posthead
+NP >= IP-REL
 
 ADJP >= ADJP.prehead ADJP.head ADJP.posthead | AML.adj
 
-ADVP >= ADVP? ADVP.head& | AML.adv
+ADVP >= ADVP.prehead ADVP.head ADVP.posthead | AML.adv
 ADVP.single >= ADV
 
-PP   >= PP.head& NP | PML&
+PP     >= P-ROLE PP.complement | PML&
 PP.rel >= PP.head& NP.rel
 
 
 # =====PHRASE CONSTITUENTS=====
 # =============================
 
-# ===NP===
-NP.head == PRO | PNX | NPR | NPRS | N | NS | NML
+# noun phrase
+NP.head == PRO | PNX | NPR | NPRS | N | NS | NML.group | NML.conj
  
-#             [about]  [all | five]  [such  a  | my]        [four]  [great]  [sleeping]      [internet] 
-NP.prehead == ADVP?    (Q   | NUM)?  (ADJP? D? | NP-GENV?)  NUM?    ADJP*    IP-PPL.single?  NP.nominal*
+#             [about]  [all | five]  [those]          [a  | my]        [most] [four]  [great]  [sleeping]      [internet] 
+NP.prehead == ADVP?    (Q   | NUM)?  D.demonstrative? (D? | NP-GENV?)  Q?     NUM?    ADJP*    IP-PPL.single?  NP.nominal*
 
-NP.prehead.rel == ADVP?    (Q   | NUM)?  (ADJP? RD? | NP-GENV.rel?)  NUM?    ADJP*    IP-PPL.single?  NP.nominal*
+NP.prehead.rel == (RD | NP-GENV.rel) NUM? ADJP* IP-PPL.single? NP.nominal*
+NP.prehead.w   == (WD | NP-GENV.w  ) NUM? ADJP* IP-PPL.single? NP.nominal*
            
 NP.posthead == PP* (IP-PPL | IP-INF.Vt | CP-THT.c)? IP-REL?
 
 NP.nominal == NPR | NPRS | N | NS | NML
 
-NP-GENV >= NP& GENM | PRO.gen
+NP-GENV     >= NP& GENM | PRO.gen
 NP-GENV.rel >= RPRO.gen
-GENM >= 's
+NP-GENV.w   >= WPRO.gen
 
-NML >= NML.group& | NML.conj
-NML.group >= NP.head PP
-NML.group >= ADJP NP.head
-NML.group >= NML.conj
-NML.group >= (NUM | NP.nominal) - NP.head
+NML       >= NML.group& | NML.conj
+NML.group >= NML.part - NML.part
+NML.part  == NP.head | NUM | P
 
-NML.conj >= NEG? ADVP? NP CONJP.n.c ADVP? | NP (, CONJP.n)+ , CONJP.n.c
-CONJP.n >= NP
+NML.conj  >= NEG? ADVP? NP CONJP.n.c ADVP? | NP (, CONJP.n)+ , CONJP.n.c
+CONJP.n   >= NP
 CONJP.n.c >= CONJ (, ADVP ,)? ADVP? NP
 
-# ===ADJP===
-ADJP.head == ADJ | ADJR | ADJS
-ADJP.prehead == ADVP* | NP? | PP?
+# adjective phrase
+ADJP.head     == ADJ | ADJR | ADJS
+ADJP.prehead  == ADVP* | NP? | PP?
 ADJP.posthead == ADVP? | PP? | IP-INF.Vt | CP-THT.c
 
 # FIXME: add parentheses at (                )             
-AML.adj >= NEG? ADVP.single? ADJP CONJP.adj.c ADVP.single? | ADJP (, CONJP.adj)+, CONJP.adj.c
-CONJP.adj >= ADJP
+AML.adj     >= NEG? ADVP.single? ADJP CONJP.adj.c ADVP.single? | ADJP (, CONJP.adj)+, CONJP.adj.c
+CONJP.adj   >= ADJP
 CONJP.adj.c >= CONJ (, ADVP, )? ADVP.single? (ADJP | PP)
 
-# ===ADVP===
-ADVP.head == ADV | ADVR | ADVS
+# adverb phrase
+ADVP.head     == ADV | ADVR | ADVS
+ADVP.prehead  == ADVP* | NP? | PP?
+ADVP.posthead == PP?
 
-AML.adv >= NEG? ADVP.single? ADVP CONJP.adv.c | ADVP (, CONJP.adv)+, CONJP.adv.c   
-CONJP.adv >= ADVP
+AML.adv     >= NEG? ADVP.single? ADVP CONJP.adv.c | ADVP (, CONJP.adv)+, CONJP.adv.c   
+CONJP.adv   >= ADVP
 CONJP.adv.c >= CONJ (, ADVP, )? ADVP.single? ADVP
 
-# ===PP===
-PP.head >= P
+# prepostion phrase
+PP.complement == NP | ADJP | ADVP | PP
 
-PML >= NEG? ADVP.single? PP CONJP.pp.c ADVP.single? | PP (, CONJP.pp)+, CONJP.adv.c
-CONJP.pp >= PP
+PML        >= NEG? ADVP.single? PP CONJP.pp.c ADVP.single? | PP (, CONJP.pp)+, CONJP.adv.c
+CONJP.pp   >= PP
 CONJP.pp.c >= CONJ (, ADVP, )? ADVP.single? PP
 
+# phrase level words
 CONJ >= and | or | but | yet
+
 C >= that
+
+RPRO     >= what | who | whom | which | that
+RPRO.gen >= whose
+RD       >= which | what | whatever
+RADV     >= how | when | where | whereby
+
+WPRO     >= what | who | whom
+WPRO.gen >= whose
+WD       >= which | what | whichever
+WADV     >= how | when | where | why
+
 P-ROLE >= P&
 P-CONN >= P&
+
+GENM >= 's
 
 NUM >= digit+&

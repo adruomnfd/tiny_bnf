@@ -11,9 +11,9 @@ much of the skills
 such a way that information can be retrieved
 my wish to meet Samuel Beckett
 everything else
-a grant in aid program
+a grant-in-aid program
 total secondary school spending in Britain
-the 2 -score - year milestone
+the 2-score-year milestone
 each one
 state highway department public relations director
 
@@ -37,7 +37,7 @@ easy enough
 very very rude
 free from difficulty
 able to do that
-unaware that certain information actually exists
+he is unaware that certain information actually exists
 for the most part unproductive
 not only difficult but also important
 wide and in the dirt
@@ -48,8 +48,7 @@ not only slowly but also carefully
 # [prepostion phrases]
 not only in the city but also in the countryside
 
-# [finite clause]
-#   [declarative]
+# [declarative]
 I run
 I can't run
 I can't have run
@@ -60,10 +59,32 @@ I do do that
 I do have done that
 I do have been doing that
 
-#    [interrogative]
-Can you run
-Did you run
-Are you outgoing
-Can you be outgoing
-Are you running
-Can you be running
++never at any time does the user feel constrained
++ by then Hez could see for himself, and so could the others
+
+# [interrogative]
+
+# that is book
+# he left
+
+# yes-no
+is that book?
+can that be book?
+did he leave?
+can he leave?
+
+# adv
+why is that book?
+why can that be book?
+why did he leave?
+why can he leave?
+
+# obj/prd
+what is that?
+what can it be?
+
+# sbj
+who left?
+
+# [imperative]
+all of you, read the book!

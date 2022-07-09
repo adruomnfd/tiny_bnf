@@ -1,8 +1,8 @@
 about the first week in June
 NP[ADVP:ADV:about D:the NUM:first N:week PP[P:in NP:NPR:June]]
 
-the young printer <apos>s apprentice
-NP[NP-GENV[D:the ADJP:ADJ:young N:printer GENM:<apos>s] N:apprentice]
+the young printer 's apprentice
+NP[NP-GENV[D:the ADJP:ADJ:young N:printer GENM:'s] N:apprentice]
 
 the computer skills course
 NP[D:the N:computer NS:skills N:course]
@@ -17,38 +17,161 @@ some testable factual basis
 NP[D:some ADJP:ADJ:testable ADJP:ADJ:factual N:basis]
 
 operator handling information
-NP[N:operator IP-PPL[VAG~Tn:handling NP-OB1:N:information]]
+NP[N:operator VAG~Tn:handling NP-OB1:N:information]
+
+much of the skills
+NP[Q:much PP[P:of NP[D:the NS:skills]]]
 
 such a way that information can be retrieved
-NP[ADJP:ADJ:such D:a N:way CP-THT:IP-SUB[C:that NP-SBJ:N:information MD:can VB~cat_Ve:be IP-PPL-CAT:VVN~Tn:retrieved]]
+NP[ADJP:ADJ:such D:a N:way CP-THT:IP-SUB[C:that NP-SBJ:N:information MD:can BE~cat_Ve:be IP-PPL-CAT:VVN~Tn:retrieved]]
 
 my wish to meet Samuel Beckett
-NP[NP-GENV:PRO:my N:wish IP-INF[TO:to VB~Tn:meet NP-OB1[NPR:Samuel NPR:Beckett]]]
+NP[NP-GENV:PRO:my N:wish TO:to VB~Tn:meet NP-OB1[NPR:Samuel NPR:Beckett]]
 
 everything else
 NP[Q:everything ADVP:ADV:else]
 
-a grant in aid program
-NP[D:a N:grant PP[P:in NP[N:aid N:program]]]
+a grant-in-aid program
+NP[D:a NML[NML[N:grant - P:in] - N:aid] N:program]
 
 total secondary school spending in Britain
 NP[ADJP:ADJ:total ADJP:ADJ:secondary N:school N:spending PP[P:in NP:NPR:Britain]]
 
-the 2 <hyphen> score <hyphen> year milestone
-NP[D:the NML[NML[NUM:2 <hyphen> N:score] <hyphen> N:year] N:milestone]
+the 2-score-year milestone
+NP[D:the NML[NML[NUM:2 - N:score] - N:year] N:milestone]
 
 each one
 NP[Q:each N:one]
 
 state highway department public relations director
-NP[N:state N:highway N:department NML[ADJP:ADJ:public NS:relations] N:director]
+NP[ADJP[NP[N:state N:highway N:department] ADJ:public] NS:relations N:director]
 
-A_ , B_ , and C_ or D_
+A_, B_, and C_ or D_
 NP:NML[NP:NPR:A_ , CONJP:NP:NPR:B_ , CONJP[CONJ:and NP:NML[NP:NPR:C_ CONJP[CONJ:or NP:NPR:D_]]]]
 
-much of the skills
-NP[Q:much PP[P:of NP[D:the NS:skills]]]
+not only A_ but also B_
+NP:NML[NEG:not ADVP:ADV:only NP:NPR:A_ CONJP[CONJ:but ADVP:ADV:also NP:NPR:B_]]
+
+not only A_ but B_ as_well
+NP:NML[NEG:not ADVP:ADV:only NP:NPR:A_ CONJP[CONJ:but NP:NPR:B_] ADVP:ADV:as_well]
+
+A_ and, perhaps, even B_
+NP:NML[NP:NPR:A_ CONJP[CONJ:and , ADVP:ADV:perhaps , ADVP:ADV:even NP:NPR:B_]]
 
 the environmental issues and problems that face us
-IP-MAT[NP-SBJ[D:the ADJP:ADJ:environmental NML[NP:NS:issues CONJP[CONJ:and NP:NS:problems]] RPRO:that] VBP~Tn:face NP-OB1:PRO:us]
+NP[D:the ADJP:ADJ:environmental NML[NP:NS:issues CONJP[CONJ:and NP:NS:problems]] NP-SBJ:RPRO:that VBP~Tn:face NP-OB1:PRO:us]
+
+the book that he bought
+NP[D:the N:book IP-REL[NP-OB1:RPRO:that NP-SBJ:PRO:he VBD~Tn:bought]]
+
+the bookstore in which he bought the book
+NP[D:the N:bookstore PP[P:in NP:RPRO:which] NP-SBJ:PRO:he VBD~Tn:bought NP-OB1[D:the N:book]]
+
+the bookstore where he bought the book
+NP[D:the N:bookstore RADV:where NP-SBJ:PRO:he VBD~Tn:bought NP-OB1[D:the N:book]]
+
+the box in which volume the water is stored
+NP[D:the N:box PP[P:in NP[RD:which N:volume]] NP-SBJ[D:the N:water] BEF~cat_Ve:BEP:is IP-PPL-CAT:VVN~Tn:stored]
+
+the box at whose top a book is placed
+NP[D:the N:box PP[P:at NP[NP-GENV:RPRO:whose N:top]] NP-SBJ[D:a N:book] BEF~cat_Ve:BEP:is IP-PPL-CAT:VVN~Tn:placed]
+
+314 boxes
+NP[NUM[3 1 4] NS:boxes]
+
+so important
+ADJP[ADVP:ADV:so ADJ:important]
+
+easy enough
+ADJP[ADJ:easy ADVP:ADV:enough]
+
+very very rude
+ADJP[ADVP:ADV:very ADVP:ADV:very ADJ:rude]
+
+free from difficulty
+ADJP[ADJ:free PP[P:from NP:N:difficulty]]
+
+able to do that
+ADJP[ADJ:able TO:to VB~Tn:do NP-OB1:D:that]
+
+unaware that certain information actually exists
+NP-SBJ[ADJP:ADJ:unaware D:that ADJP:ADJ:certain N:information] ADVP:ADV:actually VBP~I:exists
+
+for the most part unproductive
+ADJP[PP[P:for NP[D:the ADJP:ADJ:most N:part]] ADJ:unproductive]
+
+not only difficult but also important
+ADJP:AML[NEG:not ADVP:ADV:only ADJP:ADJ:difficult CONJP[CONJ:but ADVP:ADV:also ADJP:ADJ:important]]
+
+wide and in the dirt
+ADJP:AML[ADJP:ADJ:wide CONJP[CONJ:and PP[P:in NP[D:the N:dirt]]]]
+
+not only slowly but also carefully
+ADVP:AML[NEG:not ADVP:ADV:only ADVP:ADV:slowly CONJP[CONJ:but ADVP:ADV:also ADVP:ADV:carefully]]
+
+not only in the city but also in the countryside
+PP[NEG:not ADVP:ADV:only PP[P:in NP[D:the N:city]] CONJP[CONJ:but ADVP:ADV:also PP[P:in NP[D:the N:countryside]]]]
+
+I run
+NP-SBJ:PRO:I VBP~I:run
+
+I can't run
+NP-SBJ:PRO:I MD:can NEG:'t VB~I:run
+
+I can't have run
+NP-SBJ:PRO:I MD:can NEG:'t HV~cat_Ve:have IP-PPL-CAT:VVN~I:run
+
+I can't have been running
+NP-SBJ:PRO:I MD:can NEG:'t HV~cat_Ve:have IP-PPL-CAT[BEN~cat_Vg:been IP-PPL-CAT:VAG~I:running]
+
+I can't have been being tired
+NP-SBJ:PRO:I MD:can NEG:'t HV~cat_Ve:have IP-PPL-CAT[BEN~cat_Vg:been IP-PPL-CAT[BAG~La:being ADJP-PRD2:ADJ:tired]]
+
+I do do that
+NP-SBJ:PRO:I DOP:do VB~Tn:do NP-OB1:D:that
+
+I do have done that
+NP-SBJ:PRO:I DOP:do HV~cat_Ve:have IP-PPL-CAT[VVN~Tn:done NP-OB1:D:that]
+
+I do have been doing that
+NP-SBJ:PRO:I DOP:do HV~cat_Ve:have IP-PPL-CAT[BEN~cat_Vg:been IP-PPL-CAT[VAG~Tn:doing NP-OB1:D:that]]
+
+can you run
+CP-QUE:IP-SUB[MD:can NP-SBJ:PRO:you VB~I:run]
+
+did you run
+CP-QUE:IP-SUB[DOD:did NP-SBJ:PRO:you VB~I:run]
+
+are you outgoing
+CP-QUE:IP-SUB[BEF~La:BEP:are NP-SBJ:PRO:you ADJP-PRD2:ADJ:outgoing]
+
+can you be outgoing
+CP-QUE:IP-SUB[MD:can NP-SBJ:PRO:you BE~La:be ADJP-PRD2:ADJ:outgoing]
+
+are you running
+CP-QUE:IP-SUB[BEF~cat_Vg:BEP:are NP-SBJ:PRO:you IP-PPL-CAT:VAG~I:running]
+
+can you be running
+CP-QUE:IP-SUB[MD:can NP-SBJ:PRO:you BE~cat_Vg:be IP-PPL-CAT:VAG~I:running]
+
+who run
+CP-QUE[NP-SBJ:WPRO:who VBP~I:run]
+
+what did you buy
+CP-QUE:IP-SUB[NP-OB1:WPRO:what DOD:did NP-SBJ:PRO:you VB~Tn:buy]
+
+what did you consider
+CP-QUE:IP-SUB[NP-OB1:WPRO:what DOD:did NP-SBJ:PRO:you VB~Tn:consider]
+
+what are these
+CP-QUE:IP-SUB[NP-PRD2:WPRO:what BEF~Ln:BEP:are NP-SBJ:D:these]
+
+why did you run
+CP-QUE:IP-SUB[WADV:why DOD:did NP-SBJ:PRO:you VB~I:run]
+
+when did you run
+CP-QUE:IP-SUB[WADV:when DOD:did NP-SBJ:PRO:you VB~I:run]
+
+what can it be
+CP-QUE:IP-SUB[NP-PRD2:WPRO:what MD:can NP-SBJ:PRO:it BE~Ln:be]
 

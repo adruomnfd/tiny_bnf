@@ -3,16 +3,14 @@ a
 an
 the
 some
-this
-that
-those
-these
+any
 
 #Q
 no
 all
 every
 each
+most
 
 #PRO
 I
@@ -27,6 +25,8 @@ they
 them
 our
 us
+other
+others
 
 #PRO.gen
 my
@@ -53,32 +53,6 @@ himself
 herself
 themselves
 
-#RPRO
-that
-which
-who
-whom
-
-#RPRO.gen
-whose
-
-#RD
-which
-what
-qhatever
-
-#RADV
-where
-how
-when
-whereby
-
-#WPRO
-what
-who
-whom
-whose
-
 #Q.indefinite
 everyone
 everybody
@@ -89,7 +63,9 @@ nothing
 
 #Q.pr
 much
+most
 a_lot
+all
 
 #D.indefinite
 someone
@@ -105,6 +81,7 @@ this
 that
 those
 these
+such
 
 #NUM
 first
@@ -163,6 +140,8 @@ June
 Samuel
 Beckett
 Britain
+John
+Hez
 A_
 B_
 C_
@@ -226,6 +205,8 @@ part
 city
 countryside
 dirt
+time
+user
 
 #NS
 skills

@@ -1,9 +1,9 @@
 #include <tiny_bnf.h>
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <set>
-#include <chrono>
 
 namespace bnf = tiny_bnf;
 
@@ -34,7 +34,8 @@ void printTree(const bnf::Node& node, bool isRoot = true) {
   }
 }
 
-int parse(std::string text, const bnf::Terminals& terminals, const bnf::Specification& spec) {
+int parse(std::string text, const bnf::Terminals& terminals,
+          const bnf::Specification& spec) {
   std::cout << text << '\n';
   if (auto tokens = bnf::tokenize(terminals, text, true))
     if (auto trees = bnf::parse(spec, *tokens)) {
@@ -146,9 +147,15 @@ int main() {
 
   int ret = 0;
 
+  bool selected = false;
   bnf::forEachLine(readFile(dir + "sentences.txt"), [&](auto line) {
-    //auto t0 = std::chrono::high_resolution_clock::now();
-    if (line[0] != '#') {
+    if (line[0] == '+') selected = true;
+  });
+
+  bnf::forEachLine(readFile(dir + "sentences.txt"), [&](auto line) {
+    // auto t0 = std::chrono::high_resolution_clock::now();
+    if (line[0] != '#' && (!selected || line[0] == '+')) {
+      if (line[0] == '+') line = line.substr(1);
       std::stringstream ss(line);
       std::string word;
       line.clear();
@@ -168,8 +175,8 @@ int main() {
 
       ret += parse(line, terminals, spec);
     }
-    //auto t1 = std::chrono::high_resolution_clock::now();
-    //std::cout << std::chrono::duration<float>(t1 - t0).count() << "\n";
+    // auto t1 = std::chrono::high_resolution_clock::now();
+    // std::cout << std::chrono::duration<float>(t1 - t0).count() << "\n";
   });
 
   if (ret) {
