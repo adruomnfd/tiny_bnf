@@ -39,7 +39,7 @@ IP.inv == BEF~cat_Ve NP-SBJ    IP-PPL-CAT.Ve
 IP.inv == BEF~cat_Vg NP-SBJ    IP-PPL-CAT.Vg
 IP.inv == HVF~cat_Ve NP-SBJ    IP-PPL-CAT.Ve
 
-IP-MAT        >= IP[verb -> VBFS , be -> BEFS , have -> HVFS , NP-SBJ -> NP-SBJ]
+IP-MAT        >= IP[verb -> VBFS , be -> BEFS , have -> HVFS]
 IP-MAT        >= ADVP& IP.inv
 IP-MAT        >= IML.mat
 IML.mat.group >= IP-MAT& | ADJUNCT AUX NP-SBJ
@@ -47,7 +47,7 @@ IML.mat       >= IML.mat.group , CONJP.mat
 CONJP.mat     >= CONJ IML.mat.group
 
 IP-IMP.base == IP[verb -> VB   , be -> BE   , have -> HV   , NP-SBJ -> ]
-IP-IMP      >= (NP-VOC ,?)? IP-IML.base (,? NP-BOC)?
+IP-IMP      >= (NP-VOC ,?)? IP-IMP.base (,? NP-VOC)?
 
 IP-PPL.Vg   >= IP[verb -> VAG  , be -> BAG  , have -> HAG  , NP-SBJ -> NP-SBJ?]
 IP-PPL.Ve   >= IP[verb -> VVN  , be -> BEN  , have -> HVN  , NP-SBJ -> NP-SBJ?]
@@ -141,7 +141,7 @@ NP-OB1.w  >= NP.w&
 NP-OB2.w  >= NP.w&
 NP-PRD2.w >= NP.w&
 
-ADJUNCT == ADVP | PP
+ADJUNCT == (ADVP | PP)?
 
 VBF~Ln     == VBP~Ln     | VBD~Ln
 VBF~La     == VBP~La     | VBD~La
@@ -200,13 +200,13 @@ AUX == (MD | DOF) NEG?
 
 # =====PHRASES=====
 # =================
-NP >= NP.prehead NP.head NP.posthead
-NP >= (D.indefinite | Q.indefinite) ADVP? ADJP? NP.posthead
-NP >= Q.pr PP
-NP >= D.demonstrative
+NP     >= NP.prehead NP.head NP.posthead
+NP     >= (D.indefinite | Q.indefinite) ADVP? ADJP? NP.posthead
+NP     >= Q.pr PP
+NP     >= D.demonstrative
 NP.rel >= RPRO | NP.prehead.rel NP.head NP.posthead
 NP.w   >= WPRO | NP.prehead.w NP.head NP.posthead
-NP >= IP-REL
+NP     >= IP-REL
 
 ADJP >= ADJP.prehead ADJP.head ADJP.posthead | AML.adj
 
