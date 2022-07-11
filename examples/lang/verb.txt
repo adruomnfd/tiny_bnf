@@ -16,5 +16,9 @@ run runs ran run running / I
 consider considers considered considered considering / Tn
 leave leaves left left leaving / I
 read reads read read reading / Tn
+watch watches watched watched watching / Tn
 feel feels felt felt feeling / La
 see sees saw seen seeing / I
+remain remains remained remained remaining / ex_V
+solve solves solved solved solving / Tn
+play plays played played playing / Tn

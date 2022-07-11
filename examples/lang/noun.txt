@@ -146,6 +146,7 @@ A_
 B_
 C_
 D_
+TV
 
 #NPRS
 
@@ -207,6 +208,7 @@ countryside
 dirt
 time
 user
+news
 
 #NS
 skills

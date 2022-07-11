@@ -23,6 +23,7 @@ tired
 outgoing
 alright
 constrained
+many
 
 #ADJR
 more

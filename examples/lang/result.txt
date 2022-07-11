@@ -143,6 +143,9 @@ IP-MAT[ADV:never PP[P-ROLE:at NP[D:any N:time]] DOP:does NP-SBJ[D:the N:user] VB
 by then Hez could see for himself, and so could the others
 IP-MAT:IML[IML[PP[P-ROLE:by ADVP:ADV:then] NP-SBJ:NPR:Hez MD:could VB~I:see PP[P-ROLE:for NP:PNX:himself]] , CONJP[CONJ:and IML[ADVP:ADV:so MD:could NP-SBJ[D:the PRO:others]]]]
 
+there remain many problems to be solved
+IP-MAT[EX:there VBP~ex_V:remain NP-ESBJ[ADJP:ADJ:many NS:problems IP-INF[TO:to BE~cat_Ve:be IP-PPL-CAT:VVN~Tn:solved]]]
+
 is that book?
 CP-QUE:IP-SUB[BEF~Ln:BEP:is NP-SBJ:D:that NP-PRD2:N:book] ?
 

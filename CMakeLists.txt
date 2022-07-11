@@ -22,4 +22,4 @@ add_executable(minimal examples/minimal.cpp)
 target_link_libraries(minimal tiny_bnf)
 
 add_executable(lang examples/lang/parser.cpp)
- target_link_libraries(lang tiny_bnf)
+target_link_libraries(lang tiny_bnf)

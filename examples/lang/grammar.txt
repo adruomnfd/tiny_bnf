@@ -1,4 +1,5 @@
 Sentence >= IP-MAT .?
+Sentence >= IP-MAT2 .?
 Sentence >= CP-QUE \??
 Sentence >= IP-IMP (. | !)?
 Sentence >= NP | ADJP | ADVP | PP
@@ -18,6 +19,21 @@ IP == ADJUNCT NP-SBJ       be~La       ADVP? ADJP-PRD2              ADJUNCT
 IP == ADJUNCT NP-SBJ       be~cat_Ve         IP-PPL-CAT.Ve          ADJUNCT
 IP == ADJUNCT NP-SBJ       be~cat_Vg         IP-PPL-CAT.Vg          ADJUNCT
 IP == ADJUNCT NP-SBJ       have~cat_Ve       IP-PPL-CAT.Ve          ADJUNCT
+
+IP-MAT2 >= IML{comp}&
+IP-MAT2 >= IML{IML.comp}
+IP-MAT2 >= NP-SBJ IML{IML.vo}
+IP-MAT2 >= NP-SBJ IML{IML.v}  NP-OB1
+
+IML{v}    >= VBF
+IML{vo}   >= VBF NP-OB1
+IML{comp} >= NP-SBJ VBF NP-OB1
+IML >= IML{v}    CONJP.v.c{IML.v}    | IML{v}    (, CONJP.v{IML.v})+ ,    CONJP.v.c{IML.v}
+IML >= IML{vo}   CONJP.v.c{IML.vo}   | IML{vo}   (, CONJP.v{IML.vo})+ ,   CONJP.v.c{IML.vo}
+IML >= IML{comp} CONJP.v.c{IML.comp} | IML{comp} (, CONJP.v{IML.comp})+ , CONJP.v.c{IML.comp}
+CONJP.v   >= IML
+CONJP.v.c >= CONJ IML
+
 
 # subject-verb inversion
 IP.inv == AUX NP-SBJ VB~Ln      NP-PRD2
@@ -41,9 +57,10 @@ IP.inv == HVF~cat_Ve NP-SBJ    IP-PPL-CAT.Ve
 
 IP-MAT        >= IP[verb -> VBFS , be -> BEFS , have -> HVFS]
 IP-MAT        >= ADVP& IP.inv
-IP-MAT        >= IML.mat
-IML.mat.group >= IP-MAT& | ADJUNCT AUX NP-SBJ
-IML.mat       >= IML.mat.group , CONJP.mat
+IP-MAT        >= EX VBFS~ex_V NP-ESBJ
+#IP-MAT        >= IML.mat
+IML.mat.group >= NEG? ADVP? (IP-MAT& | ADJUNCT AUX NP-SBJ)
+IML.mat       >= IML.mat.group ,? CONJP.mat
 CONJP.mat     >= CONJ IML.mat.group
 
 IP-IMP.base == IP[verb -> VB   , be -> BE   , have -> HV   , NP-SBJ -> ]
@@ -100,6 +117,7 @@ VBFS~Cn.a   == VBF~Cn.a   | AUX VB~Cn.n
 VBFS~Dn.n   == VBF~Dn.n   | AUX VB~Dn.n
 VBFS~cat_Ve == VBF~cat_Ve | AUX VB~cat_Ve
 VBFS~cat_Vg == VBF~cat_Vg | AUX VB~cat_Vg
+VBFS~ex_V   == VBF~ex_V   | AUX VB~ex_V
 BEFS~Ln     == BEF~Ln     NEG? | MD NEG? BE~Ln
 BEFS~La     == BEF~La     NEG? | MD NEG? BE~La
 BEFS~cat_Ve == BEF~cat_Ve NEG? | MD NEG? BE~cat_Ve
@@ -122,6 +140,7 @@ CP-THT   >= IP-SUB
 # =====CLAUSE CONSTITUENTS=====
 # =============================
 NP-SBJ    >= NP&
+NP-ESBJ   >= NP&
 NP-OB1    >= NP&
 NP-OB2    >= NP&
 NP-PRD2   >= NP&
@@ -151,6 +170,11 @@ VBF~Cn.a   == VBP~Cn.a   | VBD~Cn.a
 VBF~Dn.n   == VBP~Dn.n   | VBD~Dn.n
 VBF~cat_Ve == VBP~cat_Ve | VBD~cat_Ve
 VBF~cat_Vg == VBP~cat_Vg | VBD~cat_Vg
+VBF~ex_V   == VBP~ex_V | VBD~ex_V
+
+VBF{Ln} == VBF~Ln
+VBF{La} == VBF~La
+VBF{Tn} == VBF~Tn
 
 MD  >= can | could | may | might | will | would | shall | should
 EX  >= there

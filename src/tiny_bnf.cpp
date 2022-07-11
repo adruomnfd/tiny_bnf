@@ -299,8 +299,9 @@ auto split(std::string_view text) {
       (parts.push_back("->"), ++i);
     else if (text[i] == '[')
       parts.push_back("[");
-    else if (text[i] == ']')
-      parts.push_back("]");
+    else if (text[i] == ']') parts.push_back("]");
+    else if (text[i] == '{') parts.push_back("{");
+    else if (text[i] == '}') parts.push_back("}");
     else if (text[i] == ',')
       parts.push_back(",");
     else if (text[i] == ' ')
@@ -323,7 +324,7 @@ auto split(std::string_view text) {
 auto parseSpec(std::string text) -> Specification {
   Specification spec;
 
-  //std::set<std::string> templateRules;
+  // std::set<std::string> templateRules;
 
   forEachLine(text, [&](auto line) {
     if (line[0] == '#') return;
@@ -335,7 +336,7 @@ auto parseSpec(std::string text) -> Specification {
 
     if (p0 != end(parts)) {
       auto name = *(p0 - 1);
-      //templateRules.insert(name);
+      // templateRules.insert(name);
 
       std::map<std::string, std::string> map;
       std::pair<decltype(map)::iterator, bool> it;
@@ -355,13 +356,13 @@ auto parseSpec(std::string text) -> Specification {
           for (auto pair : map)
             line2 = std::regex_replace(
                 line2, std::regex(pair.first),
-                pair.second.substr(0, size(pair.second) - 1)); 
+                pair.second.substr(0, size(pair.second) - 1));
           line2.erase(0, std::min(line2.find("=="), line2.find(">=")) + 2);
 
           text += "\n";
-          for(auto p = begin(parts); p != p0 - 1; ++p) text += *p + " ";
+          for (auto p = begin(parts); p != p0 - 1; ++p) text += *p + " ";
           text += line2;
-          for(auto p = p1 + 1; p != end(parts); ++p) text += " " + *p;
+          for (auto p = p1 + 1; p != end(parts); ++p) text += " " + *p;
         }
       });
     }
@@ -373,39 +374,57 @@ auto parseSpec(std::string text) -> Specification {
     if (line[0] == '#') return;
     auto parts = split(line);
 
-    if (size(parts) < 3 || (parts[1] != ">=" && parts[1] != "==")) {
+    auto p0 = find(begin(parts), end(parts), "{");
+    auto p1 = find(begin(parts), end(parts), "}");
+
+    if (size(parts) < 3) {
       std::cout << "invalid line: " << line << '\n';
       return;
     }
 
     if (find(begin(parts), end(parts), "[") != end(parts)) return;
-    //if (templateRules.find(parts[0]) != end(templateRules)) return;
+    // if (templateRules.find(parts[0]) != end(templateRules)) return;
 
     spec.addSymbol(parts[0]);
 
-    if (parts[1] == ">=" || parts[1] == "==") {
-      if (parts[1] == "==") spec.setIntermediate();
+    if (p0 != p1)
+      for (auto p = p0 + 1; p != p1; ++p) spec.addAttributes(*p);
 
-      for (size_t i = 2; i < size(parts); ++i) {
-        if (parts[i] == "\\")
-          spec >= parts[++i];
-        else if (parts[i] == "|")
-          spec.addAlternative();
-        else if (parts[i] == "(")
-          spec.addLeftParenthesis();
-        else if (parts[i] == ")")
-          spec.addRightParenthesis();
-        else if (parts[i] == "?")
-          spec.activeRule().expr.back().optional = true;
-        else if (parts[i] == "*")
-          spec.activeRule().expr.back().arbitrary = true;
-        else if (parts[i] == "+")
-          spec.activeRule().expr.back().oneOrMore = true;
-        else if (parts[i] == "&")
-          spec.activeRule().expr.back().deref = true;
-        else
-          spec >= parts[i];
-      }
+    auto it = std::min(find(begin(parts), end(parts), ">="),
+                       find(begin(parts), end(parts), "=="));
+    if (it == end(parts)) {
+      std::cout << "Invalid line: " << line << "\n";
+      return;
+    }
+    auto start = it - begin(parts);
+
+    if (parts[start] == "==") spec.setIntermediate();
+
+    bool isAttrib = false;
+
+    for (size_t i = start + 1; i < size(parts); ++i) {
+      if (parts[i] == "\\")
+        spec >= parts[++i];
+      else if (parts[i] == "|")
+        spec.addAlternative();
+      else if (parts[i] == "(")
+        spec.addLeftParenthesis();
+      else if (parts[i] == ")")
+        spec.addRightParenthesis();
+      else if(parts[i] == "{") isAttrib = true;
+      else if(parts[i] == "}") isAttrib = false;
+      else if (parts[i] == "?")
+        spec.activeRule().expr.back().optional = true;
+      else if (parts[i] == "*")
+        spec.activeRule().expr.back().arbitrary = true;
+      else if (parts[i] == "+")
+        spec.activeRule().expr.back().oneOrMore = true;
+      else if (parts[i] == "&")
+        spec.activeRule().expr.back().deref = true;
+      else if(isAttrib) 
+        spec.activeRule().expr.back().attribs.push_back(parts[i]);
+      else
+        spec.addExpr(parts[i]);
     }
   });
 
