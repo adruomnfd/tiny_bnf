@@ -127,7 +127,7 @@ auto complete(StateSets &stateSets, size_t k, size_t i) {
 
 auto parseEarley(Specification spec, Tokens tokens)
     -> Expected<std::vector<Node>> {
-  // auto t0 = std::chrono::high_resolution_clock::now();
+  auto t0 = std::chrono::high_resolution_clock::now();
   auto stateSets = StateSets(size(tokens) + 1);
   for (size_t i = 0; i != size(spec.rules); ++i)
     if (spec.rules[i].symbol == spec.rules[0].symbol)
@@ -191,8 +191,8 @@ auto parseEarley(Specification spec, Tokens tokens)
       any = true;
     }
 
-  // auto t1 = std::chrono::high_resolution_clock::now();
-  // std::cout << std::chrono::duration<float>(t1 - t0).count() << "\n";
+   auto t1 = std::chrono::high_resolution_clock::now();
+   std::cout << std::chrono::duration<float>(t1 - t0).count() << "\n";
 
   if (size(nodes) == 0)
     return Error<>(any ? "top node is not complete" : "no top node is parsed");
